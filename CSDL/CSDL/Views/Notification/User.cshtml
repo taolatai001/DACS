@@ -1,0 +1,25 @@
+﻿@model IEnumerable<CSDL.Models.Notification>
+@{
+    ViewData["Title"] = "Thông báo từ hệ thống";
+}
+
+<h2 class="mt-4">🔔 Thông báo từ hệ thống</h2>
+
+@if (Model != null && Model.Any())
+{
+    <ul class="list-group mt-3">
+        @foreach (var item in Model)
+        {
+            <li class="list-group-item">
+                <strong>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong><br />
+                @item.Message
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <div class="alert alert-info mt-3">
+        Hiện tại không có thông báo nào.
+    </div>
+}

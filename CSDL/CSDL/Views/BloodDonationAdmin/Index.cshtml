@@ -1,0 +1,81 @@
+﻿@model IEnumerable<CSDL.Models.BloodDonation>
+
+@{
+    ViewData["Title"] = "Quản lý Đăng ký Hiến máu";
+}
+
+<h2 class="mt-4 mb-3">📋 Danh sách Đăng ký Hiến máu</h2>
+
+<!-- Hiển thị thông báo -->
+
+<form method="get" action="@Url.Action("Index")">
+    <div class="form-group">
+        <input type="text" name="search" class="form-control" placeholder="" />
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Tìm kiếm</button>
+</form>
+@if (Model.Any())
+{
+    <table class="table table-bordered table-hover shadow-sm">
+        <thead class="table-light">
+            <tr>
+                <th>Người Hiến Máu</th>
+                <th>Số Điện Thoại</th>
+                <th>Nhóm Máu</th>
+                <th>Sự Kiện</th>
+                <th>Ngày Đăng Ký</th>
+                <th>Trạng Thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@(item.User?.FullName ?? "<i>Không rõ</i>")</td>
+                    <td>@(item.User?.PhoneNumber ?? "-")</td>
+                    <td>@item.BloodType</td>
+                    <td>@item.Event?.EventName</td>
+                    <td>@item.RegistrationDate.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <span class="badge @(
+                            item.Status == CSDL.Models.BloodDonationStatus.Pending ? "bg-warning text-dark" :
+                            item.Status == CSDL.Models.BloodDonationStatus.Completed ? "bg-success" : "bg-secondary")">
+                            @(
+                                item.Status == CSDL.Models.BloodDonationStatus.Pending ? "Chờ xác nhận" :
+                                item.Status == CSDL.Models.BloodDonationStatus.Completed ? "Đã hiến máu" : "Không rõ"
+                                )
+                        </span>
+                    </td>
+                    <td>
+                        @if (item.Status == CSDL.Models.BloodDonationStatus.Pending)
+                        {
+                            <div class="d-flex gap-1">
+                                <form asp-action="Confirm" asp-route-id="@item.DonationID" method="post">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fas fa-check"></i> Xác nhận
+                                    </button>
+                                </form>
+                                <form asp-action="Delete" asp-route-id="@item.DonationID" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa đăng ký này không?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i> Xóa
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">✔ Đã xác nhận</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info mt-3">
+        <i class="fas fa-info-circle"></i> Hiện chưa có đăng ký hiến máu nào.
+    </div>
+}

@@ -1,0 +1,101 @@
+﻿@model List<CSDL.Models.BloodDonationEvent>
+
+@{
+    ViewData["Title"] = "Quản lý Sự Kiện Hiến Máu";
+}
+
+<h2 class="text-danger mt-3">📅 Quản lý Sự Kiện Hiến Máu</h2>
+
+<a href="@Url.Action("Create", "BloodDonationEvent")" class="btn btn-primary mb-3">
+    <i class="fas fa-plus-circle"></i> Thêm Sự Kiện
+</a>
+
+<form asp-action="Index" method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchString" class="form-control" placeholder="Nhập tên hoặc địa điểm sự kiện..." />
+        <button class="btn btn-danger" type="submit"><i class="fas fa-search"></i> Tìm</button>
+    </div>
+</form>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @Html.Raw(TempData["SuccessMessage"])
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @Html.Raw(TempData["ErrorMessage"])
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<table class="table table-bordered table-hover shadow-sm">
+    <thead class="table-danger text-center">
+        <tr>
+            <th>Tên sự kiện</th>
+            <th>Ngày tổ chức</th>
+            <th>Địa điểm</th>
+            <th>Trạng thái</th>
+            <th>Chức năng</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var eventItem in Model)
+        {
+            <tr>
+                <td>@eventItem.EventName</td>
+                <td>@eventItem.Date.ToString("dd/MM/yyyy")</td>
+                <td>@eventItem.Location</td>
+                <td>
+                    @if (eventItem.IsLocked)
+                    {
+                        <span class="badge bg-secondary">🔒 Đã khóa</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">🟢 Mở</span>
+                    }
+                </td>
+                <td>
+                    <div class="d-flex flex-wrap gap-1">
+                        <a href="@Url.Action("Edit", "BloodDonationEvent", new { id = eventItem.EventID })" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Sửa
+                        </a>
+
+                        <form method="post" asp-action="Delete" asp-controller="BloodDonationEvent" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa sự kiện này?');">
+                            <input type="hidden" name="id" value="@eventItem.EventID" />
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash-alt"></i> Xóa
+                            </button>
+                        </form>
+
+                        <form method="post" asp-action="ToggleLock" asp-controller="BloodDonationEvent" style="display:inline;">
+                            <input type="hidden" name="id" value="@eventItem.EventID" />
+                            <button type="submit" class="btn btn-outline-dark btn-sm">
+                                <span>
+                                    @if (eventItem.IsLocked)
+                                    {
+                                        <text><i class="fas fa-lock-open"></i> Mở khóa</text>
+                                    }
+                                    else
+                                    {
+                                        <text><i class="fas fa-lock"></i> Khóa sự kiện</text>
+                                    }
+                                </span>
+
+                            </button>
+                        </form>
+
+                        <a class="btn btn-success btn-sm" href="@Url.Action("ExportExcel", "BloodDonationEvent", new { id = eventItem.EventID })">
+                            <i class="fas fa-file-excel"></i> In danh sách
+                        </a>
+
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

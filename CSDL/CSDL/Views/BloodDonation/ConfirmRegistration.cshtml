@@ -1,0 +1,38 @@
+﻿// ✅ FILE 1: ConfirmRegistration.cshtml (form đăng ký)
+@model CSDL.ViewModels.BloodDonationRegisterViewModel
+
+<h2>Đăng ký Hiến máu</h2>
+<form asp-action="ConfirmRegistration" method="post">
+    <input type="hidden" asp-for="EventID" />
+
+    <div>
+        <label>Họ và Tên:</label>
+        <input asp-for="FullName" required />
+    </div>
+    <div>
+        <label>Email:</label>
+        <input asp-for="Email" type="email" required />
+    </div>
+    <div>
+        <label>Số điện thoại:</label>
+        <input asp-for="PhoneNumber" required />
+    </div>
+    <div>
+        <label>Nhóm máu:</label>
+        <select asp-for="BloodType" class="form-control">
+            <option value="Unknown">❓ Tôi chưa biết nhóm máu</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+        </select>
+        <span asp-validation-for="BloodType" class="text-danger"></span>
+    </div>
+    <button type="submit">Xác nhận Đăng ký</button>
+</form>
+
+

@@ -1,0 +1,69 @@
+﻿@model List<CSDL.Models.BloodDonation>
+
+@{
+    ViewData["Title"] = "Lịch sử hiến máu";
+    Func<int, string> statusText = status => status switch
+    {
+        0 => "Đang chờ",
+        1 => "Hoàn tất",
+        2 => "Đã hủy",
+        _ => "Không xác định"
+    };
+    Func<int, string> statusClass = status => status switch
+    {
+        0 => "text-warning",
+        1 => "text-success",
+        2 => "text-danger",
+        _ => "text-muted"
+    };
+}
+
+<h2 class="mt-4">🩸 Lịch sử hiến máu của bạn</h2>
+<form asp-action="MyDonations" method="get" class="d-flex mb-3">
+    <input type="text" name="search" class="form-control me-2" placeholder="" />
+    <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+</form>
+
+@if (Model == null || Model.Count == 0)
+{
+    <div class="alert alert-info mt-3">
+        Bạn chưa từng hiến máu. Hãy tham gia ngay nhé!
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover mt-3 shadow-sm">
+        <thead class="table-danger">
+            <tr>
+                <th>Ngày hiến</th>
+                <th>Nhóm máu</th>
+                <th>Sự kiện</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th> @* ✅ Cột mới *@
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.RegistrationDate.ToString("dd/MM/yyyy")</td>
+                    <td>@(item.BloodType == "Unknown" ? "Chưa xác định" : item.BloodType)</td>
+                    <td>@item.Event?.EventName</td>
+                    <td class="@statusClass((int)item.Status)">
+                        @statusText((int)item.Status)
+                    </td>
+                    <td>
+                        @if (item.Status == CSDL.Models.BloodDonationStatus.Pending)
+                        {
+                            <form asp-action="Cancel" asp-route-id="@item.DonationID" method="post" class="d-inline">
+                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc muốn hủy đăng ký?')">
+                                    Hủy
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

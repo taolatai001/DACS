@@ -1,0 +1,34 @@
+﻿@model CSDL.Models.BloodDonation
+
+@{
+    ViewData["Title"] = "Xác nhận Hiến máu";
+}
+
+<h2>Xác nhận Đăng ký Hiến máu</h2>
+
+<p>Bạn có chắc chắn muốn xác nhận người này đã hiến máu?</p>
+
+<table class="table">
+    <tr>
+        <th>Họ và tên:</th>
+        <td>@Model.User.FullName</td>
+    </tr>
+    <tr>
+        <th>Số điện thoại:</th>
+        <td>@Model.User.PhoneNumber</td>
+    </tr>
+    <tr>
+        <th>Sự kiện:</th>
+        <td>@Model.Event.EventName</td>
+    </tr>
+    <tr>
+        <th>Ngày đăng ký:</th>
+        <td>@Model.RegistrationDate.ToString("dd/MM/yyyy")</td>
+    </tr>
+</table>
+
+<form asp-action="Confirm" method="post">
+    <input type="hidden" asp-for="DonationID" />
+    <button type="submit" class="btn btn-success">Xác nhận</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>

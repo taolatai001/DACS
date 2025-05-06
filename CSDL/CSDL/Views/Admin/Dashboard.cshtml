@@ -1,0 +1,32 @@
+﻿<h3 class="mb-4"><i class="fas fa-chart-bar"></i> Thống kê nhanh</h3>
+<div class="row mb-4">
+    <!-- Người dùng -->
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title">👤 Người dùng</h5>
+                <h2>@ViewBag.UserCount</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Người hiến máu lần đầu -->
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title">🩸 Người hiến máu lần đầu</h5>
+                <h2>@ViewBag.FirstTimeDonors</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sự kiện trong 30 ngày tới -->
+    <div class="col-md-4">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h5 class="card-title">📅 Sự kiện 30 ngày tới</h5>
+                <h2>@ViewBag.Upcoming30DaysEvents</h2>
+            </div>
+        </div>
+    </div>
+</div>

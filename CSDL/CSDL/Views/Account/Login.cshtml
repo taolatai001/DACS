@@ -1,0 +1,38 @@
+﻿    @model CSDL.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow-lg p-4" style="width: 400px;">
+        <h2 class="text-center text-danger"><i class="fas fa-user-circle"></i> Đăng nhập</h2>
+
+
+        <form asp-action="Login" method="post">
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input asp-for="Email" class="form-control" required />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Mật khẩu</label>
+                <input asp-for="Password" type="password" class="form-control" required />
+            </div>
+            <div class="mb-3 form-check">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label class="form-check-label">Ghi nhớ đăng nhập</label>
+            </div>
+            <button type="submit" class="btn btn-danger w-100">Đăng nhập</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <p>
+                Chưa có tài khoản? <a href="/Account/Register">Đăng ký ngay</a>
+            </p>
+            <p>
+                <a href="/Account/ForgotPassword">Quên mật khẩu?</a>
+            </p>
+        </div>
+
+
+    </div>
+</div>

@@ -1,0 +1,38 @@
+﻿@model IEnumerable<CSDL.Models.BloodDonation>
+
+@{
+    ViewData["Title"] = "Lịch sử Đăng ký Hiến máu";
+}
+
+<h2>Lịch sử Đăng ký Hiến máu</h2>
+
+@if (!Model.Any())
+{
+        <p>Bạn chưa đăng ký hiến máu lần nào.</p>
+}
+else
+{
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Sự Kiện</th>
+                    <th>Ngày Đăng Ký</th>
+                    <th>Trạng Thái</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                        <tr>
+                            <td>@item.Event.EventName</td>
+                            <td>@item.RegistrationDate.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="badge @(item.Status == CSDL.Models.BloodDonationStatus.Pending ? "bg-warning" : "bg-success")">
+                            @(item.Status == CSDL.Models.BloodDonationStatus.Pending ? "Chờ xác nhận" : "Đã hiến máu")
+                                </span>
+                            </td>
+                        </tr>
+            }
+            </tbody>
+        </table>
+}

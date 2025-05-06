@@ -1,0 +1,53 @@
+﻿@model IEnumerable<CSDL.Models.Notification>
+@{
+    ViewData["Title"] = "Quản lý Thông báo";
+}
+
+<h2>Quản lý Thông báo</h2>
+
+@if (ViewBag.Success != null)
+{
+    <div class="alert alert-success">@ViewBag.Success</div>
+}
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form asp-action="Send" method="post" class="mb-4">
+    <div class="form-group">
+        <label for="message">Nội dung thông báo</label>
+        <textarea name="message" class="form-control" rows="3" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Gửi Thông báo</button>
+</form>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Nội dung</th>
+            <th>Thời gian</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            int index = 1;
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@index++</td>
+                    <td>@item.Message</td>
+                    <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="3">Chưa có thông báo nào.</td>
+            </tr>
+        }
+    </tbody>
+</table>

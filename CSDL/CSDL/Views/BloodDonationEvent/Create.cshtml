@@ -1,0 +1,45 @@
+﻿@model CSDL.Models.BloodDonationEvent
+
+@{
+    ViewData["Title"] = "Thêm Sự Kiện Hiến Máu";
+}
+
+<h2 class="text-primary">Thêm Sự Kiện Hiến Máu</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Tên sự kiện</label>
+        <input asp-for="EventName" class="form-control" required />
+        <span asp-validation-for="EventName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ngày tổ chức</label>
+        <input asp-for="Date" type="date" class="form-control" required />
+        <span asp-validation-for="Date" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Địa điểm</label>
+        <input asp-for="Location" class="form-control" required />
+        <span asp-validation-for="Location" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Mô tả</label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-success">Lưu</button>
+    <a href="@Url.Action("Index", "BloodDonationEvent")" class="btn btn-secondary">Hủy</a>
+</form>

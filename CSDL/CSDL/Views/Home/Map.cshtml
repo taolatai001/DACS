@@ -1,0 +1,34 @@
+﻿<h2 class="text-center mt-3">Bản đồ Điểm Hiến Máu</h2>
+
+<div id="map" style="height: 500px;"></div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<script>
+    var map = L.map('map').setView([10.7769, 106.7009], 12); // Trung tâm TP.HCM
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Danh sách địa điểm từ các sự kiện thực tế
+    var bloodDonationCenters = [
+        { name: "HUTECH", lat: 10.8015, lon: 106.7147 },
+        { name: "Đại học Y Dược", lat: 10.7629, lon: 106.6822 },
+        { name: "Quận 1", lat: 10.7758, lon: 106.7004 },
+        { name: "Quận 2", lat: 10.7900, lon: 106.7498 },
+        { name: "Thủ Đức", lat: 10.8491, lon: 106.7538 },
+        { name: "Bình Thạnh", lat: 10.8057, lon: 106.7094 },
+        { name: "Gò Vấp", lat: 10.8380, lon: 106.6645 },
+        { name: "Quận 9", lat: 10.8387, lon: 106.7945 },
+        { name: "Tân Bình", lat: 10.8030, lon: 106.6520 },
+        { name: "HUTECH CS2", lat: 10.8441, lon: 106.7852 },
+        { name: "ĐH Khoa học Tự nhiên", lat: 10.7636, lon: 106.6825 }
+    ];
+
+    bloodDonationCenters.forEach(center => {
+        L.marker([center.lat, center.lon]).addTo(map)
+            .bindPopup(`<b>${center.name}</b><br>Điểm hiến máu theo sự kiện.`);
+    });
+</script>

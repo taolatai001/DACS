@@ -1,0 +1,13 @@
+﻿@model CSDL.Models.BloodDonation
+
+@{
+    ViewData["Title"] = "Đăng ký Hiến máu";
+}
+
+<h2>Đăng ký Hiến máu</h2>
+
+<form asp-action="Register" method="post">
+    <input type="hidden" name="eventId" value="@Model.EventId" />  <!-- ✅ Đúng với Model -->
+
+    <button type="submit" class="btn btn-danger">Đăng ký ngay</button>
+</form>
