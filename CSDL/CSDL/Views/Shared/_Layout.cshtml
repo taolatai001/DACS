@@ -1,30 +1,26 @@
-﻿<!DOCTYPE html>
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - Hiến Máu Nhân Đạo</title>
 
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-
-    <!-- OpenStreetMap (Leaflet) CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-
-    <!-- Custom CSS -->
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             background-color: #f8f9fa;
-            overflow-x: hidden;
         }
 
         .navbar {
             background-color: #e53935;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
         }
 
         .navbar-brand img {
@@ -33,165 +29,131 @@
             border-radius: 50%;
         }
 
-        .navbar-nav {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            scrollbar-width: none;
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 500;
         }
-
-            .navbar-nav::-webkit-scrollbar {
-                display: none;
-            }
-
-            .navbar-nav .nav-item {
-                margin-right: 10px;
-            }
-
-            .navbar-nav .nav-link {
-                color: white !important;
-                font-weight: 500;
-                font-size: 14px;
-                padding: 8px 10px;
-                transition: 0.3s;
-                border-radius: 6px;
-                white-space: nowrap;
-            }
-
-                .navbar-nav .nav-link:hover {
-                    background-color: rgba(255, 255, 255, 0.1);
-                    color: #ffcccb !important;
-                }
 
         .hero-section {
             background: url('https://source.unsplash.com/1600x900/?blood,donation') no-repeat center center/cover;
             color: white;
             text-align: center;
             padding: 120px 20px;
-            font-size: 1.5rem;
-            position: relative;
         }
-
-            .hero-section h1 {
-                font-size: 3rem;
-                font-weight: bold;
-                text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
-            }
-
-            .hero-section p {
-                font-size: 1.2rem;
-                text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
-            }
 
         .footer {
             background-color: #343a40;
             color: white;
             padding: 20px 0;
             text-align: center;
-            margin-top: 30px;
+        }
+
+        #chatbox-wrapper {
+            position: fixed;
+            bottom: 90px;
+            right: 30px;
+            width: 320px;
+            max-height: 500px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        #chatbox-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        #chatbox-input {
+            border-top: 1px solid #ccc;
+            display: flex;
+        }
+
+            #chatbox-input input {
+                flex: 1;
+                border: none;
+                padding: 10px;
+            }
+
+            #chatbox-input button {
+                background-color: #e53935;
+                border: none;
+                color: white;
+                padding: 10px 15px;
+            }
+
+        #chat-toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #e53935;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            color: white;
+            font-size: 24px;
+            z-index: 9999;
         }
     </style>
 </head>
 
 <body>
-    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <img src="https://i.pinimg.com/736x/7a/43/dd/7a43dd2411fda8c3685c393dafbc881c.jpg" alt="Logo">
                 Hiến Máu Nhân Đạo
             </a>
-
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="fas fa-home"></i> Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Home/About"><i class="fas fa-info-circle"></i> Giới thiệu</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="@Url.Action("Map", "Home")">
-                            <i class="fas fa-map-marked-alt"></i> Bản đồ Hiến máu
-                        </a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/Home/About"><i class="fas fa-info-circle"></i> Giới thiệu</a></li>
+                    <li class="nav-item"><a class="nav-link" href="@Url.Action("Map", "Home")"><i class="fas fa-map-marked-alt"></i> Bản đồ</a></li>
+
                     @if (User.Identity.IsAuthenticated)
                     {
                         if (User.IsInRole("Admin"))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "BloodDonationEvent")">
-                                    <i class="fas fa-calendar-alt"></i> Quản lý Sự Kiện
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "BloodDonationAdmin")">
-                                    <i class="fas fa-list"></i> Quản lý Hiến Máu
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/UserManagement">
-                                    <i class="fas fa-users"></i> Quản lý Người dùng
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "Notification")">
-                                    <i class="fas fa-bell"></i> Quản lý Thông báo
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "Statistics")">
-                                    <i class="fas fa-chart-bar"></i> Thống kê
-                                </a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" href="/BloodDonationEvent"><i class="fas fa-calendar-alt"></i> Quản lý Sự kiện</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/BloodDonationAdmin"><i class="fas fa-list"></i> Quản lý Hiến Máu</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/UserManagement"><i class="fas fa-users"></i> Người dùng</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Notification"><i class="fas fa-bell"></i> Thông báo</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Statistics"><i class="fas fa-chart-bar"></i> Thống kê</a></li>
                         }
                         else
                         {
-                            <a class="nav-link" href="@Url.Action("MyDonations", "BloodDonation")">
-                                <i class="fas fa-history"></i> Lịch sử hiến máu
-                            </a>
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "BloodDonation")">
-                                    <i class="fas fa-hand-holding-medical"></i> Đăng ký Hiến Máu
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("User", "Notification")">
-                                    <i class="fas fa-bell"></i> Thông báo
-                                </a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" href="/BloodDonation/MyDonations"><i class="fas fa-history"></i> Lịch sử</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/BloodDonation"><i class="fas fa-hand-holding-medical"></i> Đăng ký</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Notification/User"><i class="fas fa-bell"></i> Thông báo</a></li>
                         }
-                       
                     }
                     else
                     {
-                        <li class="nav-item">
-                            <a class="nav-link text-primary" href="/Account/Login">
-                                <i class="fas fa-sign-in-alt"></i> Đăng nhập
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-success" href="/Account/Register">
-                                <i class="fas fa-user-plus"></i> Đăng ký
-                            </a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link text-primary" href="/Account/Login"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a></li>
                     }
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <div class="hero-section">
         <h1>Hiến máu - Cứu người</h1>
         <p>Giọt máu của bạn có thể cứu sống một mạng người.</p>
 
         @if (User.Identity.IsAuthenticated)
         {
-            <div class="dropdown d-inline-block mt-3">
-                <button class="btn btn-danger btn-lg dropdown-toggle shadow" type="button" id="accountDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="dropdown mt-3">
+                <button class="btn btn-danger btn-lg dropdown-toggle shadow" type="button" data-bs-toggle="dropdown">
                     <i class="fas fa-user-circle"></i> @User.Identity.Name
                 </button>
                 <ul class="dropdown-menu">
@@ -200,192 +162,91 @@
                 </ul>
             </div>
         }
-        else
-        {
-            <a href="@Url.Action("Register", "Account")" class="btn btn-light btn-lg mt-3 shadow">
-                <i class="fas fa-user-plus"></i> Tham gia ngay
-            </a>
-        }
     </div>
 
-
-    <!-- Page Content -->
     <div class="container">
         @RenderBody()
     </div>
 
-    <!-- Toast Notification -->
+    <!-- Toast -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
-        <div id="success-toast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div id="success-toast" class="toast text-bg-success border-0" role="alert">
             <div class="d-flex">
                 <div class="toast-body"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
 
-        <div id="error-toast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div id="error-toast" class="toast text-bg-danger border-0" role="alert">
             <div class="d-flex">
                 <div class="toast-body"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>
 
-    <script>
-        window.onload = () => {
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <text>
-                        const toast = document.getElementById('success-toast');
-                        toast.querySelector('.toast-body').innerHTML = @Html.Raw(Json.Serialize(TempData["SuccessMessage"]));
-                        new bootstrap.Toast(toast).show();
-            </text>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <text>
-                        const toast = document.getElementById('error-toast');
-                        toast.querySelector('.toast-body').innerHTML = @Html.Raw(Json.Serialize(TempData["ErrorMessage"]));
-                        new bootstrap.Toast(toast).show();
-            </text>
-        }
-        };
-    </script>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <!-- Chatbot Floating Button -->
-<style>
-    #chatbox-wrapper {
-        position: fixed;
-        bottom: 90px;
-        right: 30px;
-        width: 320px;
-        max-height: 500px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-        display: none;
-        flex-direction: column;
-        z-index: 9999;
-        overflow: hidden;
-    }
-
-    #chatbox-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-        font-size: 14px;
-    }
-
-    #chatbox-input {
-        border-top: 1px solid #ccc;
-        display: flex;
-    }
-
-    #chatbox-input input {
-        flex: 1;
-        border: none;
-        padding: 10px;
-        font-size: 14px;
-    }
-
-    #chatbox-input button {
-        background-color: #e53935;
-        border: none;
-        color: white;
-        padding: 10px 15px;
-    }
-
-    #chat-toggle-btn {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background-color: #e53935;
-        border: none;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        color: white;
-        font-size: 24px;
-        z-index: 9999;
-    }
-</style>
-
-<!-- Nút bật Chat -->
-<button id="chat-toggle-btn">
-    <i class="fas fa-robot"></i>
-</button>
-
-<!-- Chatbot Box -->
+    <!-- Chatbot -->
+    <button id="chat-toggle-btn"><i class="fas fa-robot"></i></button>
     <div id="chatbox-wrapper">
         <div id="chatbox-messages"></div>
         <div id="chatbox-input">
             <input type="text" id="chat-input" placeholder="Nhập câu hỏi..." />
             <button onclick="sendChat()">Gửi</button>
         </div>
-        <!-- Nút Xóa lịch sử -->
         <div class="text-end px-2 py-1 border-top bg-light">
             <button class="btn btn-sm btn-outline-secondary" onclick="clearChat()">🗑 Xóa lịch sử</button>
         </div>
     </div>
 
+    <footer class="footer mt-5">
+        <div class="container text-center">
+            <p>&copy; @DateTime.Now.Year - Hệ thống quản lý hiến máu</p>
+            <p><strong>📞 Hotline:</strong> 1900 9999 | <strong>✉ Email:</strong> tailacanhsat@gmail.com</p>
+        </div>
+    </footer>
 
-    <!-- Script toast + chatbot -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
         window.onload = () => {
-            // ✅ Toast
+            const toast = (id, msg) => {
+                const t = document.getElementById(id);
+                t.querySelector('.toast-body').innerHTML = msg;
+                new bootstrap.Toast(t).show();
+            };
+
         @if (TempData["SuccessMessage"] != null)
         {
-            <text>
-                        const toast = document.getElementById('success-toast');
-                        toast.querySelector('.toast-body').innerHTML = @Html.Raw(Json.Serialize(TempData["SuccessMessage"]));
-                        new bootstrap.Toast(toast).show();
-            </text>
+            <text>toast("success-toast", "@TempData["SuccessMessage"]");</text>
         }
         @if (TempData["ErrorMessage"] != null)
         {
-            <text>
-                        const toast = document.getElementById('error-toast');
-                        toast.querySelector('.toast-body').innerHTML = @Html.Raw(Json.Serialize(TempData["ErrorMessage"]));
-                        new bootstrap.Toast(toast).show();
-            </text>
+            <text>toast("error-toast", "@TempData["ErrorMessage"]");</text>
         }
 
-
-            // ✅ Chatbot init
             const chatBox = document.getElementById('chatbox-wrapper');
             const toggleBtn = document.getElementById('chat-toggle-btn');
             const messages = document.getElementById('chatbox-messages');
             const input = document.getElementById('chat-input');
 
-            chatBox.style.display = 'none';
-
             toggleBtn.addEventListener('click', () => {
                 chatBox.style.display = chatBox.style.display === 'none' ? 'flex' : 'none';
             });
 
-            // ✅ Load lịch sử từ localStorage
-            const savedMessages = localStorage.getItem('chatMessages');
-            if (savedMessages) {
-                messages.innerHTML = savedMessages;
-                messages.scrollTop = messages.scrollHeight;
-            }
+            const saved = localStorage.getItem('chatMessages');
+            if (saved) messages.innerHTML = saved;
 
-            // ✅ Gửi câu hỏi
-            window.sendChat = async function () {
-                const userMessage = input.value.trim();
-                if (!userMessage) return;
-
-                messages.innerHTML += `<div><strong>Bạn:</strong> ${userMessage}</div>`;
+            window.sendChat = async () => {
+                const msg = input.value.trim();
+                if (!msg) return;
+                messages.innerHTML += `<div><strong>Bạn:</strong> ${msg}</div>`;
                 input.value = '';
 
                 try {
                     const res = await fetch('/Chat/Ask', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: userMessage })
+                        body: JSON.stringify({ prompt: msg })
                     });
                     const data = await res.json();
                     messages.innerHTML += `<div><strong>AI:</strong> ${data.reply}</div>`;
@@ -393,28 +254,17 @@
                     messages.innerHTML += `<div class="text-danger"><strong>Lỗi:</strong> Không thể kết nối AI.</div>`;
                 }
 
-                // ✅ Lưu lại lịch sử
                 localStorage.setItem('chatMessages', messages.innerHTML);
                 messages.scrollTop = messages.scrollHeight;
             };
 
-            // ✅ Xóa lịch sử
-            window.clearChat = function () {
+            window.clearChat = () => {
                 messages.innerHTML = '';
                 localStorage.removeItem('chatMessages');
             };
         };
     </script>
 
-
-    
-    @RenderSection("Scripts", required: false) 
+    @RenderSection("Scripts", required: false)
 </body>
 </html>
-
-<footer class="footer">
-    <div class="container text-center">
-        <p>&copy; @DateTime.Now.Year - Hệ thống quản lý hiến máu</p>
-        <p><strong>📞 Hotline:</strong> 1900 9999 &nbsp; | &nbsp; <strong>✉ Email:</strong> tailacanhsat@gmail.com</p>
-    </div>
-</footer>

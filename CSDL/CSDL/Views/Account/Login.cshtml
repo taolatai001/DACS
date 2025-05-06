@@ -1,38 +1,18 @@
-﻿    @model CSDL.ViewModels.LoginViewModel
-@{
+﻿@{
     ViewData["Title"] = "Đăng nhập";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // đảm bảo dùng layout chính
 }
 
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="card shadow-lg p-4" style="width: 400px;">
-        <h2 class="text-center text-danger"><i class="fas fa-user-circle"></i> Đăng nhập</h2>
-
-
-        <form asp-action="Login" method="post">
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input asp-for="Email" class="form-control" required />
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Mật khẩu</label>
-                <input asp-for="Password" type="password" class="form-control" required />
-            </div>
-            <div class="mb-3 form-check">
-                <input asp-for="RememberMe" class="form-check-input" />
-                <label class="form-check-label">Ghi nhớ đăng nhập</label>
-            </div>
-            <button type="submit" class="btn btn-danger w-100">Đăng nhập</button>
-        </form>
-
-        <div class="text-center mt-3">
-            <p>
-                Chưa có tài khoản? <a href="/Account/Register">Đăng ký ngay</a>
-            </p>
-            <p>
-                <a href="/Account/ForgotPassword">Quên mật khẩu?</a>
-            </p>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="card shadow-lg border-0 p-4 text-center" style="width: 100%; max-width: 400px;">
+        <div class="mb-4">
+            <i class="fas fa-user-circle fa-3x text-danger mb-3"></i>
+            <h3 class="text-danger">Đăng nhập</h3>
+            <p class="text-muted">Vui lòng sử dụng tài khoản Google để tiếp tục</p>
         </div>
 
-
+        <a href="/Account/ExternalLogin?provider=Google" class="btn btn-outline-danger w-100">
+            <i class="fab fa-google me-2"></i> Đăng nhập bằng Google
+        </a>
     </div>
 </div>
