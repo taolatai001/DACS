@@ -1,34 +1,74 @@
-﻿<h2 class="text-center mt-3">Bản đồ Điểm Hiến Máu</h2>
+﻿<h2 class="text-center mt-3">📍 Bản đồ Điểm Hiến Máu Tuần Tới</h2>
+<div id="map" style="height: 500px; width: 100%;"></div>
 
-<div id="map" style="height: 500px;"></div>
+@section Scripts {
+    <script>
+        async function initMap() {
+            const center = { lat: 10.7769, lng: 106.7009 };
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 12,
+                center: center
+            });
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+            try {
+                const response = await fetch('/api/BloodEventApi/upcoming');
+                const data = await response.json();
 
-<script>
-    var map = L.map('map').setView([10.7769, 106.7009], 12); // Trung tâm TP.HCM
+                for (const event of data) {
+                    if (!event.latitude || !event.longitude) continue;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+                    const lat = event.latitude;
+                    const lng = event.longitude;
 
-    // Danh sách địa điểm từ các sự kiện thực tế
-    var bloodDonationCenters = [
-        { name: "HUTECH", lat: 10.8015, lon: 106.7147 },
-        { name: "Đại học Y Dược", lat: 10.7629, lon: 106.6822 },
-        { name: "Quận 1", lat: 10.7758, lon: 106.7004 },
-        { name: "Quận 2", lat: 10.7900, lon: 106.7498 },
-        { name: "Thủ Đức", lat: 10.8491, lon: 106.7538 },
-        { name: "Bình Thạnh", lat: 10.8057, lon: 106.7094 },
-        { name: "Gò Vấp", lat: 10.8380, lon: 106.6645 },
-        { name: "Quận 9", lat: 10.8387, lon: 106.7945 },
-        { name: "Tân Bình", lat: 10.8030, lon: 106.6520 },
-        { name: "HUTECH CS2", lat: 10.8441, lon: 106.7852 },
-        { name: "ĐH Khoa học Tự nhiên", lat: 10.7636, lon: 106.6825 }
-    ];
+                    // 🌤️ Gọi API thời tiết
+                    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=metric&lang=vi&appid=f95810105807ee991e4461b9ed8f05c1`;
+                    const weatherRes = await fetch(weatherUrl);
+                    const weatherData = await weatherRes.json();
 
-    bloodDonationCenters.forEach(center => {
-        L.marker([center.lat, center.lon]).addTo(map)
-            .bindPopup(`<b>${center.name}</b><br>Điểm hiến máu theo sự kiện.`);
-    });
-</script>
+                    const weather = weatherData.weather?.[0]?.description || "Không rõ";
+                    const temp = weatherData.main?.temp ?? "N/A";
+                    const icon = weatherData.weather?.[0]?.icon || "01d";
+
+                    // 🎯 Màu theo điều kiện thời tiết
+                    let markerColor = "red";
+                    if (weather.includes("mưa")) markerColor = "blue";
+                    else if (weather.includes("mây")) markerColor = "gray";
+                    else if (weather.includes("nắng")) markerColor = "orange";
+
+                    const marker = new google.maps.Marker({
+                        position: { lat, lng },
+                        map: map,
+                        title: event.eventName,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: markerColor,
+                            fillOpacity: 0.9,
+                            strokeWeight: 1,
+                            strokeColor: "#fff"
+                        }
+                    });
+
+                    const info = `
+                        <strong>${event.eventName}</strong><br/>
+                        🗓️ Ngày: ${new Date(event.date).toLocaleDateString('vi-VN')}<br/>
+                        🕘 Giờ: ${event.time || "Không rõ"}<br/>
+                        📍 Địa điểm: ${event.location}<br/>
+                        🌤️ Thời tiết: ${weather}, ${temp}°C<br/>
+                        <img src="https://openweathermap.org/img/wn/${icon}@@2x.png" alt="weather icon" />
+                    `;
+
+                    const infoWindow = new google.maps.InfoWindow({ content: info });
+                    marker.addListener("click", () => {
+                        infoWindow.open(map, marker);
+                    });
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi tải dữ liệu sự kiện hoặc thời tiết:", error);
+            }
+        }
+    </script>
+
+    <!-- 🔑 Google Maps API -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDB2cC4DwqL1KUoNCzjdu2W5zlauSqU-hA&callback=initMap"></script>
+}

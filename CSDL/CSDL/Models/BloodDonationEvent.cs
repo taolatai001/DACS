@@ -18,8 +18,13 @@ namespace CSDL.Models
 
         [Required(ErrorMessage = "Địa điểm không được để trống.")]
         public string Location { get; set; }
-        public bool IsLocked { get; set; } = false; // ✅ Mặc định không bị khóa
+
+        public bool IsLocked { get; set; } = false;
 
         public string Description { get; set; }
+
+        // ✅ Thêm toạ độ cho bản đồ
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 }

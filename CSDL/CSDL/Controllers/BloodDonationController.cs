@@ -49,8 +49,6 @@ namespace CSDL.Controllers
         }
 
 
-
-        // ✅ Hiển thị form nhập thông tin đăng ký
         [HttpGet]
         public async Task<IActionResult> RegisterForm(int eventId)
         {
@@ -59,16 +57,19 @@ namespace CSDL.Controllers
 
             var model = new BloodDonationRegisterViewModel
             {
-                EventID = eventId,
                 FullName = user.FullName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
                 BloodType = user.BloodType,
-                IsBloodTypeLocked = user.IsBloodTypeLocked // ✅ Thêm dòng này
+                IsBloodTypeLocked = user.IsBloodTypeLocked,
+                HealthInsuranceImagePath = user.HealthInsuranceImagePath,  // 🔍 Thêm dòng này
+                MedicalDocumentPath = user.MedicalDocumentPath,            // 🔍 Và dòng này
+                EventID = eventId
             };
 
             return View(model);
         }
+
 
 
         // ✅ Hiển thị lịch sử hiến máu của User
@@ -177,10 +178,9 @@ namespace CSDL.Controllers
         [HttpPost]
         public async Task<IActionResult> ConfirmRegistration(BloodDonationRegisterViewModel model)
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.UserName == User.Identity.Name);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            // Lấy thông tin sự kiện
             var eventInfo = await _context.BloodDonationEvents.FindAsync(model.EventID);
             if (eventInfo == null)
             {
@@ -188,28 +188,20 @@ namespace CSDL.Controllers
                 return RedirectToAction("Index");
             }
 
-            if (eventInfo.IsLocked)
+            if (eventInfo.IsLocked || eventInfo.Date.Date < DateTime.Now.Date)
             {
-                TempData["ErrorMessage"] = "Sự kiện này đã bị khóa và không thể đăng ký thêm.";
+                TempData["ErrorMessage"] = "Sự kiện đã bị khóa hoặc đã diễn ra.";
                 return RedirectToAction("Index");
             }
 
-            if (eventInfo.Date.Date < DateTime.Now.Date)
-            {
-                TempData["ErrorMessage"] = "Không thể đăng ký sự kiện đã diễn ra.";
-                return RedirectToAction("Index");
-            }
-
-            // Kiểm tra đã đăng ký sự kiện chưa
             var existingDonation = await _context.BloodDonations
                 .FirstOrDefaultAsync(d => d.UserID == user.Id && d.EventId == model.EventID);
             if (existingDonation != null)
             {
-                TempData["ErrorMessage"] = "Bạn đã đăng ký sự kiện này rồi!";
+                TempData["ErrorMessage"] = "Bạn đã đăng ký sự kiện này rồi.";
                 return RedirectToAction("Index");
             }
 
-            // Kiểm tra khoảng cách 90 ngày giữa các lần hiến máu
             var latestDonation = await _context.BloodDonations
                 .Include(d => d.Event)
                 .Where(d => d.UserID == user.Id && d.Status == BloodDonationStatus.Completed)
@@ -222,7 +214,22 @@ namespace CSDL.Controllers
                 return RedirectToAction("Index");
             }
 
-            // ✅ Ràng buộc nhóm máu chỉ 1 lần
+            // BẮT BUỘC nếu chưa từng upload
+            if ((model.HealthInsuranceImage == null || model.HealthInsuranceImage.Length == 0)
+                && string.IsNullOrEmpty(user.HealthInsuranceImagePath))
+            {
+                TempData["ErrorMessage"] = "❗ Bạn chưa có ảnh BHYT. Hãy cập nhật thông tin trước khi đăng ký.";
+                return RedirectToAction("CompleteProfile", "Account", new { email = user.Email });
+            }
+
+            if ((model.MedicalDocument == null || model.MedicalDocument.Length == 0)
+                && string.IsNullOrEmpty(user.MedicalDocumentPath))
+            {
+                TempData["ErrorMessage"] = "❗ Bạn chưa có hồ sơ khám bệnh. Hãy cập nhật thông tin trước khi đăng ký.";
+                return RedirectToAction("CompleteProfile", "Account", new { email = user.Email });
+            }
+
+            // ✅ Cập nhật nhóm máu nếu lần đầu
             if (string.IsNullOrEmpty(user.BloodType) || user.BloodType == "Unknown")
             {
                 user.BloodType = model.BloodType;
@@ -230,15 +237,17 @@ namespace CSDL.Controllers
             }
             else if (user.IsBloodTypeLocked && user.BloodType != model.BloodType)
             {
-                TempData["ErrorMessage"] = "Bạn không thể thay đổi nhóm máu sau khi đã đăng ký lần đầu.";
+                TempData["ErrorMessage"] = "Bạn không thể thay đổi nhóm máu sau khi đã đăng ký.";
                 return RedirectToAction("RegisterForm", new { eventId = model.EventID });
             }
 
-            // ✅ Upload ảnh BHYT
-            if (model.HealthInsuranceImage != null)
+            // ✅ Lưu file BHYT nếu có
+            if (model.HealthInsuranceImage != null && model.HealthInsuranceImage.Length > 0)
             {
+                var insuranceDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/insurance");
+                Directory.CreateDirectory(insuranceDir);
                 var fileName = Guid.NewGuid() + Path.GetExtension(model.HealthInsuranceImage.FileName);
-                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/insurance", fileName);
+                var path = Path.Combine(insuranceDir, fileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await model.HealthInsuranceImage.CopyToAsync(stream);
@@ -246,11 +255,13 @@ namespace CSDL.Controllers
                 user.HealthInsuranceImagePath = "/uploads/insurance/" + fileName;
             }
 
-            // ✅ Upload hồ sơ khám bệnh
-            if (model.MedicalDocument != null)
+            // ✅ Lưu file hồ sơ nếu có
+            if (model.MedicalDocument != null && model.MedicalDocument.Length > 0)
             {
+                var medicalDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/medical");
+                Directory.CreateDirectory(medicalDir);
                 var fileName = Guid.NewGuid() + Path.GetExtension(model.MedicalDocument.FileName);
-                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/medical", fileName);
+                var path = Path.Combine(medicalDir, fileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await model.MedicalDocument.CopyToAsync(stream);
@@ -258,10 +269,9 @@ namespace CSDL.Controllers
                 user.MedicalDocumentPath = "/uploads/medical/" + fileName;
             }
 
-            // ✅ Cập nhật thông tin người dùng
             await _userManager.UpdateAsync(user);
 
-            // ✅ Tạo bản ghi đăng ký hiến máu
+            // ✅ Lưu đăng ký
             var donation = new BloodDonation
             {
                 UserID = user.Id,
@@ -277,6 +287,7 @@ namespace CSDL.Controllers
             TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng chờ xác nhận từ Admin.";
             return RedirectToAction("Index");
         }
+
 
 
 

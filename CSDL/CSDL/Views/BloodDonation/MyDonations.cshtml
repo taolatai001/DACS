@@ -7,13 +7,15 @@
         0 => "Đang chờ",
         1 => "Hoàn tất",
         2 => "Đã hủy",
+        3 => "Đã từ chối",
         _ => "Không xác định"
     };
     Func<int, string> statusClass = status => status switch
     {
         0 => "text-warning",
         1 => "text-success",
-        2 => "text-danger",
+        2 => "text-secondary",
+        3 => "text-danger",
         _ => "text-muted"
     };
 }
@@ -39,7 +41,7 @@ else
                 <th>Nhóm máu</th>
                 <th>Sự kiện</th>
                 <th>Trạng thái</th>
-                <th>Hành động</th> @* ✅ Cột mới *@
+                <th>Hành động</th>
             </tr>
         </thead>
         <tbody>

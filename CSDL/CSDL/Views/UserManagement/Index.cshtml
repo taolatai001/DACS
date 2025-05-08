@@ -1,44 +1,61 @@
-﻿@model List<CSDL.Models.User>
-
-
+﻿@model IEnumerable<CSDL.Models.User>
 @{
-    ViewData["Title"] = "Quản lý Người dùng";
-    var userRoles = ViewData["UserRoles"] as Dictionary<string, string>;
+    ViewData["Title"] = "Quản lý người dùng";
+    var roles = ViewData["UserRoles"] as Dictionary<string, string>;
 }
 
-<h2 class="text-danger">Quản lý Người dùng</h2>
-<form asp-action="Index" method="get" class="mb-3">
+<h2 class="mb-4">👥 Danh sách người dùng</h2>
+
+<form method="get" class="mb-3">
     <div class="input-group">
-        <input type="text" name="search" class="form-control" placeholder="" />
-        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Tìm</button>
+        <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, email hoặc vai trò..." />
+        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
     </div>
 </form>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
 
-<table class="table table-bordered">
-    <thead class="table-dark">
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
         <tr>
-            <th>Họ và tên</th>
+            <th>STT</th>
+            <th>Họ tên</th>
             <th>Email</th>
-            <th>Quyền</th>
-            <th>Chức năng</th>
+            <th>Điện thoại</th>
+            <th>Vai trò</th>
+            <th class="text-center">Thao tác</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var user in Model)
+        @if (!Model.Any())
         {
             <tr>
-                <td>@user.FullName</td>
-                <td>@user.Email</td>
-                <td>@(userRoles.ContainsKey(user.Id) ? userRoles[user.Id] : "Người dùng")</td>
-                <td>
-                    <a href="@Url.Action("Edit", "UserManagement", new { id = user.Id })" class="btn btn-warning">Sửa</a>
-                    <form method="post" action="@Url.Action("Delete", "UserManagement")" style="display:inline;">
-                        <input type="hidden" name="id" value="@user.Id" />
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa?');">Xóa</button>
-                    </form>
-                </td>
+                <td colspan="6" class="text-center">Không có người dùng nào.</td>
             </tr>
+        }
+        else
+        {
+            var index = 1;
+            foreach (var user in Model)
+            {
+                <tr>
+                    <td>@index</td>
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>@user.PhoneNumber</td>
+                    <td>@roles?[user.Id]</td>
+                    <td class="text-center">
+                        <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-info">👁️ Xem</a>
+                        <form asp-action="Delete" asp-route-id="@user.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa người dùng này?');">
+                            <button type="submit" class="btn btn-sm btn-danger">🗑️ Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+                index++;
+            }
         }
     </tbody>
 </table>

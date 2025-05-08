@@ -47,6 +47,44 @@ namespace CSDL.Controllers.Admin
 
             return View(donations);
         }
+        [HttpPost]
+        public async Task<IActionResult> Reject(int id)
+        {
+            var donation = await _context.BloodDonations
+                .Include(d => d.User)
+                .Include(d => d.Event)
+                .FirstOrDefaultAsync(d => d.DonationID == id);
+
+            if (donation == null || donation.User == null || donation.Event == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy đơn đăng ký.";
+                return RedirectToAction("Index");
+            }
+
+            if (donation.Status != BloodDonationStatus.Pending)
+            {
+                TempData["WarningMessage"] = "Chỉ có thể từ chối đơn đang chờ xác nhận.";
+                return RedirectToAction("Index");
+            }
+
+            // ✅ Gán đúng trạng thái TỪ CHỐI
+            donation.Status = BloodDonationStatus.Rejected;
+            await _context.SaveChangesAsync();
+
+            // ✅ Nội dung email thông báo
+            string subject = "❌ Đăng ký hiến máu bị từ chối";
+            string body = $@"
+        Xin chào {donation.User.FullName},<br/>
+        Đơn đăng ký hiến máu của bạn tại sự kiện <strong>{donation.Event.EventName}</strong> 
+        ngày <strong>{donation.Event.Date:dd/MM/yyyy}</strong> đã bị <strong>từ chối</strong> vì lý do sức khỏe hoặc thông tin chưa đầy đủ.<br/><br/>
+        Vui lòng liên hệ với ban tổ chức để biết thêm chi tiết.";
+
+            await _emailService.SendEmailAsync(donation.User.Email, subject, body);
+
+            TempData["SuccessMessage"] = "❌ Đã từ chối đăng ký hiến máu.";
+            return RedirectToAction("Index");
+        }
+
 
 
         // ✅ Admin xác nhận người hiến máu
@@ -108,6 +146,19 @@ namespace CSDL.Controllers.Admin
 
             TempData["SuccessMessage"] = $"🗑️ Đã xóa đơn đăng ký của <strong>{donation.User?.FullName ?? "người dùng"}</strong>!";
             return RedirectToAction(nameof(Index));
+        }
+        // ✅ Xem chi tiết đơn đăng ký hiến máu
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var donation = await _context.BloodDonations
+                .Include(d => d.User)
+                .Include(d => d.Event)
+                .FirstOrDefaultAsync(d => d.DonationID == id);
+
+            if (donation == null) return NotFound();
+
+            return View("Details", donation);
         }
 
     }

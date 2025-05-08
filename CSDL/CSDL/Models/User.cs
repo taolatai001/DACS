@@ -13,16 +13,22 @@ namespace CSDL.Models
 
         [Phone(ErrorMessage = "Số điện thoại không hợp lệ.")]
         [MaxLength(15, ErrorMessage = "Số điện thoại không được vượt quá 15 ký tự.")]
-        public override string PhoneNumber { get; set; }
 
+    
+        public override string PhoneNumber { get; set; } = "0000000000";
+        [MaxLength(10)]
         public string BloodType { get; set; } = "Unknown";
 
-        // ✅ Cờ khóa nhóm máu sau khi đã khai báo lần đầu
-
-
-        public string? HealthInsuranceImagePath { get; set; }  // ✅ cho phép null
-        public string? MedicalDocumentPath { get; set; }       // ✅ cho phép null
+        public string? HealthInsuranceImagePath { get; set; }
+        public string? MedicalDocumentPath { get; set; }
 
         public bool IsBloodTypeLocked { get; set; } = false;
+
+        // ✅ Thêm các thuộc tính mới để nhập sau khi đăng nhập bằng Google
+        [MaxLength(10)]
+        public string? Gender { get; set; }
+
+        [MaxLength(200)]
+        public string? Address { get; set; }
     }
 }
