@@ -1,0 +1,68 @@
+﻿@model CSDL.Models.User
+
+@{
+    ViewData["Title"] = "Thông tin người dùng";
+}
+
+<h2 class="text-center mb-4">👤 Thông tin chi tiết người dùng</h2>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Email</th>
+        <td>@Model.Email</td>
+    </tr>
+    <tr>
+        <th>Họ tên</th>
+        <td>@Model.FullName</td>
+    </tr>
+    <tr>
+        <th>Số điện thoại</th>
+        <td>@Model.PhoneNumber</td>
+    </tr>
+    <tr>
+        <th>Giới tính</th>
+        <td>@Model.Gender</td>
+    </tr>
+    <tr>
+        <th>Địa chỉ</th>
+        <td>@Model.Address</td>
+    </tr>
+    <tr>
+        <th>Nhóm máu</th>
+        <td>@(string.IsNullOrEmpty(Model.BloodType) || Model.BloodType == "Unknown" ? "Chưa biết" : Model.BloodType)</td>
+    </tr>
+    <tr>
+        <th>Ảnh BHYT</th>
+        <td>
+            @if (!string.IsNullOrEmpty(Model.HealthInsuranceImagePath))
+            {
+                <div>
+                    <img src="@Model.HealthInsuranceImagePath" alt="BHYT" style="max-height: 100px;" />
+                    <br />
+                    <a href="@Model.HealthInsuranceImagePath" target="_blank">🔍 Xem ảnh lớn</a>
+                </div>
+            }
+            else
+            {
+                <span>Không có</span>
+            }
+        </td>
+    </tr>
+
+    <tr>
+        <th>Giấy khám sức khỏe</th>
+        <td>
+            @if (!string.IsNullOrEmpty(Model.MedicalDocumentPath))
+            {
+                <a href="@Model.MedicalDocumentPath" target="_blank">📄 Xem giấy khám</a>
+            }
+            else
+            {
+                <span>Không có</span>
+            }
+        </td>
+    </tr>
+
+</table>
+
+<a asp-action="Index" class="btn btn-secondary">⬅ Quay lại danh sách</a>

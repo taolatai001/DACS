@@ -1,5 +1,9 @@
 ﻿@model CSDL.ViewModels.BloodDonationRegisterViewModel
 
+@{
+    ViewData["Title"] = "Đăng ký Hiến máu";
+}
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -7,10 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - Hiến Máu Nhân Đạo</title>
 
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -57,7 +59,9 @@
         <h2><i class="fas fa-heartbeat"></i> Đăng ký Hiến máu</h2>
 
         <form asp-action="ConfirmRegistration" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
             <input type="hidden" asp-for="EventID" />
+            <input type="hidden" asp-for="BloodType" />
 
             <div class="mb-3">
                 <label asp-for="FullName" class="form-label">Họ và Tên:</label>
@@ -74,40 +78,33 @@
                 <input asp-for="PhoneNumber" class="form-control" readonly />
             </div>
 
-       
-
             <div class="mb-3">
-                <label asp-for="BloodType" class="form-label">Nhóm máu:</label>
-                @if (Model.IsBloodTypeLocked)
-                {
-                    <input type="text" name="BloodType" class="form-control" value="@Model.BloodType" readonly />
-                }
-                else
-                {
-                    <select name="BloodType" class="form-select">
-                        <option value="">-- Chọn nhóm máu --</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                        <option value="Unknown">Tôi chưa biết nhóm máu</option>
-                    </select>
-                }
-                <span asp-validation-for="BloodType" class="text-danger"></span>
+                <label class="form-label">Nhóm máu:</label>
+                <input type="text" class="form-control" value="@Model.BloodType" readonly />
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Ảnh thẻ BHYT (JPG, PNG):</label>
-                <input type="file" name="HealthInsuranceImage" class="form-control" accept=".jpg,.jpeg,.png" />
+                <label asp-for="HealthInsuranceImage" class="form-label">Ảnh thẻ BHYT (JPG, PNG):</label>
+                @if (!string.IsNullOrEmpty(Model.HealthInsuranceImagePath))
+                {
+                    <p>
+                        <a href="@Model.HealthInsuranceImagePath" target="_blank">🧾 Xem ảnh BHYT đã tải lên</a>
+                    </p>
+                }
+                <input asp-for="HealthInsuranceImage" type="file" class="form-control" accept=".jpg,.jpeg,.png" />
+                <span asp-validation-for="HealthInsuranceImage" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Hồ sơ khám bệnh (PDF hoặc ảnh):</label>
-                <input type="file" name="MedicalDocument" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+                <label asp-for="MedicalDocument" class="form-label">Hồ sơ khám bệnh (PDF hoặc ảnh):</label>
+                @if (!string.IsNullOrEmpty(Model.MedicalDocumentPath))
+                {
+                    <p>
+                        <a href="@Model.MedicalDocumentPath" target="_blank">📄 Xem hồ sơ đã tải lên</a>
+                    </p>
+                }
+                <input asp-for="MedicalDocument" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+                <span asp-validation-for="MedicalDocument" class="text-danger"></span>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">Xác nhận Đăng ký</button>
@@ -115,5 +112,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
 </body>
 </html>

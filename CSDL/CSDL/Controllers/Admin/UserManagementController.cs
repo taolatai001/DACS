@@ -22,35 +22,45 @@ namespace CSDL.Controllers.Admin
             _roleManager = roleManager;
         }
 
-        // ✅ 1. Danh sách người dùng
+        // ✅ 1. Danh sách người dùng (có tìm kiếm)
         public async Task<IActionResult> Index(string search)
         {
-            var users = await _userManager.Users.ToListAsync();  // Lấy tất cả người dùng từ UserManager
+            var users = await _userManager.Users.ToListAsync();
             var userRoles = new Dictionary<string, string>();
 
-            // Tạo Dictionary để lưu vai trò của người dùng
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                userRoles[user.Id] = roles.Any() ? string.Join(", ", roles) : "Người dùng";  // Lưu vai trò vào Dictionary
+                userRoles[user.Id] = roles.Any() ? string.Join(", ", roles) : "Người dùng";
             }
 
-            // Lọc người dùng theo tìm kiếm
             if (!string.IsNullOrEmpty(search))
             {
+                search = search.ToLower();
                 users = users.Where(u =>
-                    u.FullName.Contains(search) ||
-                    u.Email.Contains(search) ||
-                    userRoles[u.Id].Contains(search)).ToList();
+                    (u.FullName != null && u.FullName.ToLower().Contains(search)) ||
+                    (u.Email != null && u.Email.ToLower().Contains(search)) ||
+                    userRoles[u.Id].ToLower().Contains(search)
+                ).ToList();
             }
 
-            // Truyền dữ liệu vào View
             ViewData["UserRoles"] = userRoles;
-            return View(users);  // Trả về View với người dùng và vai trò
+            return View(users);
         }
 
+        // ✅ 2. Xem chi tiết người dùng
+        [HttpGet]
+        public async Task<IActionResult> Details(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return NotFound();
 
-        // ✅ 2. Xóa người dùng
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            return View(user);
+        }
+
+        // ✅ 3. Xóa người dùng
         [HttpPost]
         public async Task<IActionResult> Delete(string id)
         {
@@ -58,11 +68,12 @@ namespace CSDL.Controllers.Admin
             if (user == null) return NotFound();
 
             await _userManager.DeleteAsync(user);
-            TempData["SuccessMessage"] = "Xóa người dùng thành công.";
+            TempData["SuccessMessage"] = "🗑️ Xóa người dùng thành công.";
             return RedirectToAction("Index");
         }
 
-        // ✅ 3. Hiển thị form chỉnh sửa người dùng
+        // ✅ 4. Hiển thị form chỉnh sửa
+        [HttpGet]
         public async Task<IActionResult> Edit(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -74,24 +85,32 @@ namespace CSDL.Controllers.Admin
                 Id = user.Id,
                 FullName = user.FullName,
                 Email = user.Email,
-                Role = roles.FirstOrDefault() ?? "Người dùng"
+                Role = roles.FirstOrDefault() ?? "User"
             };
 
+            LoadRolesToViewBag();
             return View(model);
         }
 
-        // ✅ 4. Cập nhật thông tin người dùng
+        // ✅ 5. Cập nhật người dùng
         [HttpPost]
         public async Task<IActionResult> Edit(EditUserViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                LoadRolesToViewBag();
+                return View(model);
+            }
+
             var user = await _userManager.FindByIdAsync(model.Id);
             if (user == null) return NotFound();
 
-            // ✅ Kiểm tra Email có bị trùng không
-            var existingUser = await _userManager.FindByEmailAsync(model.Email);
-            if (existingUser != null && existingUser.Id != model.Id)
+            // Kiểm tra trùng email
+            var duplicateEmailUser = await _userManager.FindByEmailAsync(model.Email);
+            if (duplicateEmailUser != null && duplicateEmailUser.Id != user.Id)
             {
-                ModelState.AddModelError("Email", "Email này đã tồn tại trong hệ thống.");
+                ModelState.AddModelError("Email", "Email này đã được sử dụng.");
+                LoadRolesToViewBag();
                 return View(model);
             }
 
@@ -102,17 +121,24 @@ namespace CSDL.Controllers.Admin
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
-                ModelState.AddModelError("", "Cập nhật thông tin thất bại.");
+                ModelState.AddModelError("", "Cập nhật thất bại.");
+                LoadRolesToViewBag();
                 return View(model);
             }
 
-            // ✅ Cập nhật vai trò
+            // Cập nhật vai trò
             var currentRoles = await _userManager.GetRolesAsync(user);
             await _userManager.RemoveFromRolesAsync(user, currentRoles);
             await _userManager.AddToRoleAsync(user, model.Role);
 
-            TempData["SuccessMessage"] = "Cập nhật thông tin thành công.";
+            TempData["SuccessMessage"] = "✅ Cập nhật thông tin người dùng thành công.";
             return RedirectToAction("Index");
+        }
+
+        // ✅ Phương thức dùng lại để load danh sách role
+        private void LoadRolesToViewBag()
+        {
+            ViewBag.AllRoles = _roleManager.Roles.Select(r => r.Name).ToList();
         }
     }
 }

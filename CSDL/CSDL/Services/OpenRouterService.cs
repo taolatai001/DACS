@@ -33,13 +33,52 @@ namespace CSDL.Services
 
         public async Task<string> AskAsync(string prompt)
         {
+            var lowerPrompt = prompt.ToLower();
+
+            // ❗ Từ chối nếu không liên quan đến chủ đề hiến máu
+            string[] allowedKeywords = { "hiến máu", "máu", "donate", "blood", "sự kiện", "lịch sử", "đăng ký", "địa điểm", "ngày nào", "huyết học" };
+            if (!allowedKeywords.Any(k => lowerPrompt.Contains(k)))
+            {
+                return "🤖 Tôi chỉ hỗ trợ các câu hỏi liên quan đến **hiến máu nhân đạo** và các sự kiện hiến máu. Vui lòng đặt câu hỏi phù hợp.";
+            }
+
+            // ✅ Gắn thông tin sự kiện sắp tới nếu có
+            var events = GetUpcomingEvents();
+            var eventsInfo = events.Any()
+                ? string.Join("\n", events.Select(e => $"- {e.EventName} (ngày {e.Date:dd/MM/yyyy} tại {e.Location})"))
+                : "Hiện không có sự kiện hiến máu sắp tới.";
+
             var requestBody = new
             {
                 model = _options.Model,
                 messages = new[]
                 {
-                    new { role = "user", content = prompt }
-                }
+            new
+            {
+                role = "system",
+                content = $@"
+🩸 Bạn là trợ lý AI cho hệ thống **Hiến Máu Nhân Đạo HUTECH**.
+
+Trang web này cung cấp:
+- Đăng ký tham gia các sự kiện hiến máu sắp tới.
+- Tra cứu lịch sử hiến máu của bản thân.
+- Cập nhật hồ sơ cá nhân gồm nhóm máu, BHYT và giấy khám sức khỏe.
+- Thông tin các sự kiện được tổ chức tại nhiều địa điểm.
+
+📅 Sự kiện sắp diễn ra:
+{eventsInfo}
+
+❗ Nếu người dùng hỏi các nội dung ngoài phạm vi hiến máu (ví dụ hỏi game, phim, tin tức...), bạn hãy lịch sự từ chối bằng:
+“Tôi chỉ hỗ trợ thông tin về hiến máu nhân đạo tại hệ thống này. Mong bạn thông cảm.”
+
+Hãy trả lời ngắn gọn, rõ ràng, dễ hiểu và chỉ tập trung vào chủ đề hiến máu."
+            },
+            new
+            {
+                role = "user",
+                content = prompt
+            }
+        }
             };
 
             var json = JsonSerializer.Serialize(requestBody);
@@ -60,5 +99,6 @@ namespace CSDL.Services
                       .GetString()
                       ?.Trim() ?? "Không có phản hồi từ chatbot.";
         }
+
     }
 }

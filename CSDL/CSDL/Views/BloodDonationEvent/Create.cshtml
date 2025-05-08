@@ -40,6 +40,19 @@
         <textarea asp-for="Description" class="form-control"></textarea>
     </div>
 
+    <div class="mb-3">
+        <label class="form-label">Vĩ độ (Latitude)</label>
+        <input asp-for="Latitude" type="number" step="any" class="form-control" required />
+        <span asp-validation-for="Latitude" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Kinh độ (Longitude)</label>
+        <input asp-for="Longitude" type="number" step="any" class="form-control" required />
+        <span asp-validation-for="Longitude" class="text-danger"></span>
+    </div>
+
     <button type="submit" class="btn btn-success">Lưu</button>
     <a href="@Url.Action("Index", "BloodDonationEvent")" class="btn btn-secondary">Hủy</a>
 </form>
+

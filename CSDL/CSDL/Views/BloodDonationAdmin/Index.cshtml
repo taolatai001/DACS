@@ -6,14 +6,26 @@
 
 <h2 class="mt-4 mb-3">📋 Danh sách Đăng ký Hiến máu</h2>
 
-<!-- Hiển thị thông báo -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@Html.Raw(TempData["SuccessMessage"])</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@Html.Raw(TempData["ErrorMessage"])</div>
+}
+@if (TempData["WarningMessage"] != null)
+{
+    <div class="alert alert-warning">@Html.Raw(TempData["WarningMessage"])</div>
+}
 
-<form method="get" action="@Url.Action("Index")">
-    <div class="form-group">
-        <input type="text" name="search" class="form-control" placeholder="" />
+<form method="get" action="@Url.Action("Index")" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="search" class="form-control" placeholder="🔍 Tìm theo tên, nhóm máu, trạng thái..." />
+        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
     </div>
-    <button type="submit" class="btn btn-primary mt-2">Tìm kiếm</button>
 </form>
+
 @if (Model.Any())
 {
     <table class="table table-bordered table-hover shadow-sm">
@@ -25,7 +37,7 @@
                 <th>Sự Kiện</th>
                 <th>Ngày Đăng Ký</th>
                 <th>Trạng Thái</th>
-                <th>Hành động</th>
+                <th class="text-center">Hành động</th>
             </tr>
         </thead>
         <tbody>
@@ -40,20 +52,32 @@
                     <td>
                         <span class="badge @(
                             item.Status == CSDL.Models.BloodDonationStatus.Pending ? "bg-warning text-dark" :
-                            item.Status == CSDL.Models.BloodDonationStatus.Completed ? "bg-success" : "bg-secondary")">
+                            item.Status == CSDL.Models.BloodDonationStatus.Completed ? "bg-success" :
+                            item.Status == CSDL.Models.BloodDonationStatus.Rejected ? "bg-danger" :
+                            "bg-secondary")">
                             @(
                                 item.Status == CSDL.Models.BloodDonationStatus.Pending ? "Chờ xác nhận" :
-                                item.Status == CSDL.Models.BloodDonationStatus.Completed ? "Đã hiến máu" : "Không rõ"
+                                item.Status == CSDL.Models.BloodDonationStatus.Completed ? "Đã hiến máu" :
+                                item.Status == CSDL.Models.BloodDonationStatus.Rejected ? "Đã từ chối" :
+                                "Không rõ"
                                 )
                         </span>
                     </td>
                     <td>
-                        @if (item.Status == CSDL.Models.BloodDonationStatus.Pending)
-                        {
-                            <div class="d-flex gap-1">
+                        <div class="d-flex flex-wrap gap-1 justify-content-center">
+                            <a asp-action="Details" asp-route-id="@item.DonationID" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i> Xem
+                            </a>
+                            @if (item.Status == CSDL.Models.BloodDonationStatus.Pending)
+                            {
                                 <form asp-action="Confirm" asp-route-id="@item.DonationID" method="post">
                                     <button type="submit" class="btn btn-success btn-sm">
                                         <i class="fas fa-check"></i> Xác nhận
+                                    </button>
+                                </form>
+                                <form asp-action="Reject" asp-route-id="@item.DonationID" method="post" onsubmit="return confirm('Bạn có chắc muốn từ chối đơn đăng ký này không?');">
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-ban"></i> Từ chối
                                     </button>
                                 </form>
                                 <form asp-action="Delete" asp-route-id="@item.DonationID" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa đăng ký này không?');">
@@ -61,12 +85,8 @@
                                         <i class="fas fa-trash-alt"></i> Xóa
                                     </button>
                                 </form>
-                            </div>
-                        }
-                        else
-                        {
-                            <span class="text-muted">✔ Đã xác nhận</span>
-                        }
+                            }
+                        </div>
                     </td>
                 </tr>
             }

@@ -1,0 +1,69 @@
+﻿@model CSDL.Models.BloodDonation
+
+@{
+    ViewData["Title"] = "Chi tiết Đăng ký Hiến máu";
+}
+
+<h2 class="mb-4">📝 Chi tiết đăng ký hiến máu</h2>
+
+<table class="table table-bordered">
+    <tr><th>Họ và tên</th><td>@Model.User.FullName</td></tr>
+    <tr><th>Email</th><td>@Model.User.Email</td></tr>
+    <tr><th>Số điện thoại</th><td>@Model.User.PhoneNumber</td></tr>
+    <tr><th>Sự kiện</th><td>@Model.Event.EventName - @Model.Event.Date.ToShortDateString()</td></tr>
+    <tr><th>Nhóm máu</th><td>@Model.BloodType</td></tr>
+    <tr>
+        <th>Trạng thái</th>
+        <td>
+            @if (Model.Status == BloodDonationStatus.Pending)
+            {
+                <span class="text-warning fw-bold">Đang chờ xác nhận</span>
+            }
+            else if (Model.Status == BloodDonationStatus.Completed)
+            {
+                <span class="text-success fw-bold">Đã xác nhận</span>
+            }
+        </td>
+    </tr>
+    <tr>
+        <th>Ảnh BHYT</th>
+        <td>
+            @if (!string.IsNullOrEmpty(Model.User.HealthInsuranceImagePath))
+            {
+                <img src="@Model.User.HealthInsuranceImagePath" style="max-height:100px;" class="rounded border" />
+                <br />
+                <a href="@Model.User.HealthInsuranceImagePath" target="_blank">🔍 Xem ảnh lớn</a>
+            }
+            else
+            {
+                <span>Không có</span>
+            }
+        </td>
+    </tr>
+    <tr>
+        <th>Giấy khám sức khỏe</th>
+        <td>
+            @if (!string.IsNullOrEmpty(Model.User.MedicalDocumentPath))
+            {
+                <a href="@Model.User.MedicalDocumentPath" target="_blank">📄 Xem hồ sơ</a>
+            }
+            else
+            {
+                <span>Không có</span>
+            }
+        </td>
+    </tr>
+</table>
+
+@if (Model.Status == BloodDonationStatus.Pending)
+{
+    <form asp-action="Confirm" method="post">
+        <input type="hidden" name="id" value="@Model.DonationID" />
+        <button type="submit" class="btn btn-success">✅ Xác nhận đơn này</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">⬅ Quay lại</a>
+    </form>
+}
+else
+{
+    <a asp-action="Index" class="btn btn-secondary">⬅ Quay lại</a>
+}

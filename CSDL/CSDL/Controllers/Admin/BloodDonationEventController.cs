@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 using System.IO;
+using System.Text.Json;
+
 namespace CSDL.Controllers.Admin
 {
     [Authorize(Roles = "Admin")]
@@ -18,10 +20,10 @@ namespace CSDL.Controllers.Admin
         {
             _context = context;
         }
+
         public async Task<IActionResult> Index(string searchString)
         {
-            var events = from e in _context.BloodDonationEvents
-                         select e;
+            var events = from e in _context.BloodDonationEvents select e;
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -34,20 +36,11 @@ namespace CSDL.Controllers.Admin
             return View(await events.ToListAsync());
         }
 
-        // ✅ 1. Danh sách sự kiện hiến máu
-        //public async Task<IActionResult> Index()
-        //{
-        //    var events = await _context.BloodDonationEvents.ToListAsync();
-        //    return View(events);
-        //}
-
-        // ✅ 2. Hiển thị form thêm sự kiện mới
         public IActionResult Create()
         {
             return View();
         }
 
-        // ✅ 3. Xử lý thêm mới sự kiện hiến máu
         [HttpPost]
         public async Task<IActionResult> Create(BloodDonationEvent bloodDonationEvent)
         {
@@ -55,6 +48,7 @@ namespace CSDL.Controllers.Admin
             {
                 ModelState.AddModelError("Date", "Không thể tạo sự kiện với ngày trong quá khứ.");
             }
+
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
@@ -69,11 +63,10 @@ namespace CSDL.Controllers.Admin
 
             try
             {
-                // ✅ Chuyển đổi định dạng ngày trước khi lưu vào database
-                bloodDonationEvent.Date = DateTime.ParseExact(bloodDonationEvent.Date.ToString("yyyy-MM-dd"), "yyyy-MM-dd", null);
-
+                // ✅ Bỏ gọi API — dùng tọa độ đã nhập từ form
                 _context.BloodDonationEvents.Add(bloodDonationEvent);
                 await _context.SaveChangesAsync();
+
                 TempData["SuccessMessage"] = "Sự kiện hiến máu đã được thêm thành công.";
                 return RedirectToAction("Index");
             }
@@ -84,6 +77,8 @@ namespace CSDL.Controllers.Admin
                 return View(bloodDonationEvent);
             }
         }
+
+
         [HttpPost]
         public async Task<IActionResult> ToggleLock(int id)
         {
@@ -94,17 +89,13 @@ namespace CSDL.Controllers.Admin
                 return RedirectToAction("Index");
             }
 
-            // Đảo ngược trạng thái khóa/mở
             eventItem.IsLocked = !eventItem.IsLocked;
-
             await _context.SaveChangesAsync();
 
             string status = eventItem.IsLocked ? "đã bị khóa ✅" : "đã mở lại 🔓";
             TempData["SuccessMessage"] = $"Sự kiện <strong>{eventItem.EventName}</strong> {status}.";
-
             return RedirectToAction("Index");
         }
-
 
         [HttpPost]
         public async Task<IActionResult> UnlockEvent(int id)
@@ -138,8 +129,6 @@ namespace CSDL.Controllers.Admin
             using (var workbook = new XLWorkbook())
             {
                 var worksheet = workbook.Worksheets.Add("Danh sách");
-
-                // Tiêu đề
                 worksheet.Cell(1, 1).Value = "STT";
                 worksheet.Cell(1, 2).Value = "Họ và tên";
                 worksheet.Cell(1, 3).Value = "Email";
@@ -161,8 +150,6 @@ namespace CSDL.Controllers.Admin
                     worksheet.Cell(row, 4).Value = user?.PhoneNumber;
                     worksheet.Cell(row, 5).Value = d.BloodType;
 
-                    // ✅ Link Ảnh BHYT
-                    // Link Ảnh BHYT
                     if (!string.IsNullOrEmpty(user?.HealthInsuranceImagePath))
                     {
                         var bhytUrl = $"{Request.Scheme}://{Request.Host}{user.HealthInsuranceImagePath}";
@@ -171,7 +158,6 @@ namespace CSDL.Controllers.Admin
                         cellBhyt.SetHyperlink(new XLHyperlink(bhytUrl));
                     }
 
-                    // Link Hồ sơ khám bệnh
                     if (!string.IsNullOrEmpty(user?.MedicalDocumentPath))
                     {
                         var docUrl = $"{Request.Scheme}://{Request.Host}{user.MedicalDocumentPath}";
@@ -179,7 +165,6 @@ namespace CSDL.Controllers.Admin
                         cellDoc.Value = "Xem hồ sơ";
                         cellDoc.SetHyperlink(new XLHyperlink(docUrl));
                     }
-
 
                     worksheet.Cell(row, 9).Value = d.RegistrationDate.ToString("dd/MM/yyyy");
                     worksheet.Cell(row, 10).Value = d.Status.ToString();
@@ -194,9 +179,6 @@ namespace CSDL.Controllers.Admin
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
-
-        // ✅ 4. Hiển thị form chỉnh sửa sự kiện
-        // GET: Hiển thị form chỉnh sửa
         public async Task<IActionResult> Edit(int id)
         {
             var eventItem = await _context.BloodDonationEvents.FindAsync(id);
@@ -204,8 +186,6 @@ namespace CSDL.Controllers.Admin
 
             return View(eventItem);
         }
-
-        // POST: Cập nhật sự kiện
         [HttpPost]
         public async Task<IActionResult> Edit(BloodDonationEvent model)
         {
@@ -215,7 +195,6 @@ namespace CSDL.Controllers.Admin
                 return View(model);
             }
 
-            // ✅ Không cho chọn ngày trong quá khứ
             if (model.Date.Date < DateTime.Today)
             {
                 TempData["ErrorMessage"] = "Không thể cập nhật sự kiện về ngày trong quá khứ!";
@@ -232,6 +211,10 @@ namespace CSDL.Controllers.Admin
                 eventItem.Location = model.Location;
                 eventItem.Description = model.Description;
 
+                // ✅ Dùng tọa độ nhập từ form
+                eventItem.Latitude = model.Latitude;
+                eventItem.Longitude = model.Longitude;
+
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Sự kiện đã được cập nhật thành công!";
                 return RedirectToAction("Index");
@@ -245,7 +228,8 @@ namespace CSDL.Controllers.Admin
         }
 
 
-        // ✅ 6. Xóa sự kiện hiến máu
+     
+
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
@@ -264,6 +248,5 @@ namespace CSDL.Controllers.Admin
 
             return RedirectToAction("Index");
         }
-
     }
 }

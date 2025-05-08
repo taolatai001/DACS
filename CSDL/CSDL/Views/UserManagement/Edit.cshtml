@@ -2,13 +2,13 @@
 
 @{
     ViewData["Title"] = "Chỉnh sửa Người dùng";
+    var allRoles = ViewBag.AllRoles as List<string>;
 }
 
-<h2 class="text-warning">Chỉnh sửa thông tin</h2>
+<h2 class="text-warning">✏️ Chỉnh sửa người dùng</h2>
 
-@* ✅ Hiển thị lỗi chung (VD: email đã tồn tại) *@
+<!-- ✅ Hiển thị lỗi chung -->
 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
-
 
 <form method="post">
     <input type="hidden" asp-for="Id" />
@@ -27,20 +27,16 @@
 
     <div class="mb-3">
         <label class="form-label">Vai trò</label>
-        <select asp-for="Role" class="form-control">
-            <option value="Admin">Admin</option>
-            <option value="User">Người dùng</option>
+        <select asp-for="Role" asp-items="@(new SelectList(allRoles))" class="form-control">
+            <option disabled selected>-- Chọn vai trò --</option>
         </select>
         <span asp-validation-for="Role" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-success">Lưu</button>
-    <a href="@Url.Action("Index", "UserManagement")" class="btn btn-secondary">Hủy</a>
+    <button type="submit" class="btn btn-success">💾 Lưu</button>
+    <a asp-action="Index" class="btn btn-secondary">❌ Hủy</a>
 </form>
 
 @section Scripts {
-    @* ✅ Thêm đoạn này để kích hoạt validation phía client *@
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 }

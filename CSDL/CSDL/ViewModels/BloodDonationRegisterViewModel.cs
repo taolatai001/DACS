@@ -15,13 +15,21 @@ namespace CSDL.ViewModels
         [Required(ErrorMessage = "Số điện thoại không được để trống")]
         public string PhoneNumber { get; set; }
 
-        public string BloodType { get; set; } = "Unknown";
+        [Required(ErrorMessage = "Vui lòng chọn nhóm máu")]
+        public string BloodType { get; set; }
+
         public bool IsBloodTypeLocked { get; set; }
 
-        // ✅ Chỉ giữ lại 2 file upload
-        public IFormFile HealthInsuranceImage { get; set; }      // Ảnh BHYT
-        public IFormFile MedicalDocument { get; set; }           // Hồ sơ khám bệnh
+        [Required(ErrorMessage = "Vui lòng đính kèm ảnh thẻ BHYT")]
+        public IFormFile HealthInsuranceImage { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng đính kèm hồ sơ khám bệnh")]
+        public IFormFile MedicalDocument { get; set; }
 
         public int EventID { get; set; }
+
+        // Không cần bắt buộc vì được sinh sau khi lưu ảnh
+        public string? HealthInsuranceImagePath { get; set; }
+        public string? MedicalDocumentPath { get; set; }
     }
 }

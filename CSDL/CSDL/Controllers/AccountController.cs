@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using CSDL.ViewModels;
 using CSDL.Models;
-using CSDL.Services;
-using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 
 namespace CSDL.Controllers
@@ -21,10 +19,7 @@ namespace CSDL.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
@@ -48,7 +43,6 @@ namespace CSDL.Controllers
             return RedirectToAction("Login");
         }
 
-        // ✅ Đăng nhập với Google
         [HttpGet]
         public IActionResult ExternalLogin(string provider, string returnUrl = "/")
         {
@@ -67,16 +61,37 @@ namespace CSDL.Controllers
                 return RedirectToAction("Login");
             }
 
+            // Đã từng liên kết
             var signInResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
-
             if (signInResult.Succeeded)
             {
-                return Redirect(returnUrl);
+                var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                if (user == null)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy tài khoản người dùng.";
+                    return RedirectToAction("Login");
+                }
+
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                    return RedirectToAction("Dashboard", "Admin");
+
+                // ✅ Kiểm tra thiếu thông tin → chuyển đến trang hoàn thiện hồ sơ
+                if (string.IsNullOrWhiteSpace(user.FullName?.Trim()) ||
+                    string.IsNullOrWhiteSpace(user.PhoneNumber?.Trim()) ||
+                    string.IsNullOrWhiteSpace(user.Gender?.Trim()) ||
+                    string.IsNullOrWhiteSpace(user.Address?.Trim()))
+                {
+                    return RedirectToAction("CompleteProfile", new { email = user.Email });
+                }
+
+                return RedirectToAction("Index", "Home");
             }
 
-            // Tạo tài khoản nếu chưa có
-            var email = info.Principal.FindFirstValue(System.Security.Claims.ClaimTypes.Email);
-            if (email != null)
+            // Chưa từng liên kết Google → tạo tài khoản
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            var fullName = info.Principal.FindFirstValue(ClaimTypes.Name);
+
+            if (!string.IsNullOrEmpty(email))
             {
                 var user = await _userManager.FindByEmailAsync(email);
                 if (user == null)
@@ -85,27 +100,144 @@ namespace CSDL.Controllers
                     {
                         UserName = email,
                         Email = email,
-                        FullName = info.Principal.FindFirstValue(System.Security.Claims.ClaimTypes.Name)
+                        FullName = fullName ?? "",
+                        PhoneNumber = "", // Để ép cập nhật
+                        Gender = null,
+                        Address = null
                     };
+
                     var result = await _userManager.CreateAsync(user);
                     if (result.Succeeded)
                     {
                         await _userManager.AddToRoleAsync(user, "User");
                         await _userManager.AddLoginAsync(user, info);
                         await _signInManager.SignInAsync(user, isPersistent: false);
-                        return Redirect(returnUrl);
+                        return RedirectToAction("CompleteProfile", new { email = user.Email });
                     }
                 }
                 else
                 {
+                    // Đã có user → liên kết Google
                     await _userManager.AddLoginAsync(user, info);
                     await _signInManager.SignInAsync(user, isPersistent: false);
-                    return Redirect(returnUrl);
+
+                    if (await _userManager.IsInRoleAsync(user, "Admin"))
+                        return RedirectToAction("Dashboard", "Admin");
+
+                    if (string.IsNullOrWhiteSpace(user.FullName?.Trim()) ||
+                        string.IsNullOrWhiteSpace(user.PhoneNumber?.Trim()) ||
+                        string.IsNullOrWhiteSpace(user.Gender?.Trim()) ||
+                        string.IsNullOrWhiteSpace(user.Address?.Trim()))
+                    {
+                        return RedirectToAction("CompleteProfile", new { email = user.Email });
+                    }
+
+                    return RedirectToAction("Index", "Home");
                 }
             }
 
-            TempData["ErrorMessage"] = "Không thể đăng nhập bằng Google.";
+            TempData["ErrorMessage"] = "Không thể lấy thông tin email từ Google.";
             return RedirectToAction("Login");
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> CompleteProfile(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return NotFound();
+
+            return View(new CompleteProfileViewModel
+            {
+                Email = user.Email,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber,
+                Gender = user.Gender,
+                Address = user.Address,
+                BloodType = user.BloodType,
+                HealthInsuranceImagePath = user.HealthInsuranceImagePath,
+                MedicalDocumentPath = user.MedicalDocumentPath
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CompleteProfile(CompleteProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                foreach (var entry in ModelState)
+                {
+                    foreach (var error in entry.Value.Errors)
+                    {
+                        Console.WriteLine($"Lỗi tại '{entry.Key}': {error.ErrorMessage}");
+                    }
+                }
+
+                // Giữ lại path cũ nếu có
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                {
+                    model.HealthInsuranceImagePath = existingUser.HealthInsuranceImagePath;
+                    model.MedicalDocumentPath = existingUser.MedicalDocumentPath;
+                }
+
+                return View(model);
+            }
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) return NotFound();
+
+            user.FullName = model.FullName;
+            user.PhoneNumber = model.PhoneNumber;
+            user.Gender = model.Gender;
+            user.Address = model.Address;
+            user.BloodType = model.BloodType ?? "Unknown";
+
+            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+            if (!Directory.Exists(uploadsPath))
+                Directory.CreateDirectory(uploadsPath);
+
+            // Ảnh BHYT
+            if (model.HealthInsuranceImage != null && model.HealthInsuranceImage.Length > 0)
+            {
+                var fileName = Guid.NewGuid() + Path.GetExtension(model.HealthInsuranceImage.FileName);
+                var filePath = Path.Combine(uploadsPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.HealthInsuranceImage.CopyToAsync(stream);
+                }
+
+                user.HealthInsuranceImagePath = "/uploads/" + fileName;
+            }
+
+            // Hồ sơ khám bệnh
+            if (model.MedicalDocument != null && model.MedicalDocument.Length > 0)
+            {
+                var fileName = Guid.NewGuid() + Path.GetExtension(model.MedicalDocument.FileName);
+                var filePath = Path.Combine(uploadsPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.MedicalDocument.CopyToAsync(stream);
+                }
+
+                user.MedicalDocumentPath = "/uploads/" + fileName;
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
+                return RedirectToAction("Index", "Home");
+            }
+
+            // Nếu thất bại, truyền lại đường dẫn hiện tại để hiển thị
+            model.HealthInsuranceImagePath = user.HealthInsuranceImagePath;
+            model.MedicalDocumentPath = user.MedicalDocumentPath;
+
+            ModelState.AddModelError("", "Có lỗi xảy ra khi cập nhật.");
+            return View(model);
         }
 
         public async Task<IActionResult> Logout()
@@ -114,9 +246,6 @@ namespace CSDL.Controllers
             return RedirectToAction("Login");
         }
 
-        public IActionResult AccessDenied()
-        {
-            return View();
-        }
+        public IActionResult AccessDenied() => View();
     }
 }
