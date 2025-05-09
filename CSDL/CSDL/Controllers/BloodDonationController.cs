@@ -141,7 +141,19 @@ namespace CSDL.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            // Kiểm tra nếu user đã đăng ký sự kiện này trước đó
+            // ✅ Kiểm tra nếu user đã có đăng ký CHỜ chưa xử lý trong 90 ngày
+            var pendingDonation = await _context.BloodDonations
+                .Where(d => d.UserID == user.Id && d.Status == BloodDonationStatus.Pending)
+                .OrderByDescending(d => d.RegistrationDate)
+                .FirstOrDefaultAsync();
+
+            if (pendingDonation != null && (DateTime.Now - pendingDonation.RegistrationDate).TotalDays <= 90)
+            {
+                TempData["ErrorMessage"] = "Bạn đã có đăng ký đang chờ xác nhận chưa quá 90 ngày. Vui lòng chờ Admin xử lý trước khi đăng ký mới.";
+                return RedirectToAction("Index");
+            }
+
+            // ✅ Kiểm tra nếu user đã đăng ký sự kiện này trước đó
             var existingDonation = await _context.BloodDonations
                 .FirstOrDefaultAsync(d => d.UserID == user.Id && d.EventId == eventId);
 
@@ -194,6 +206,19 @@ namespace CSDL.Controllers
                 return RedirectToAction("Index");
             }
 
+            // Kiểm tra nếu user đã có đăng ký CHỜ chưa xử lý trong 90 ngày
+            var pendingDonation = await _context.BloodDonations
+                .Where(d => d.UserID == user.Id && d.Status == BloodDonationStatus.Pending)
+                .OrderByDescending(d => d.RegistrationDate)
+                .FirstOrDefaultAsync();
+
+            if (pendingDonation != null && (DateTime.Now - pendingDonation.RegistrationDate).TotalDays <= 90)
+            {
+                TempData["ErrorMessage"] = "Bạn đã có đăng ký đang chờ xác nhận chưa quá 90 ngày. Vui lòng chờ Admin xử lý trước khi đăng ký mới.";
+                return RedirectToAction("Index");
+            }
+
+            // Kiểm tra trùng sự kiện
             var existingDonation = await _context.BloodDonations
                 .FirstOrDefaultAsync(d => d.UserID == user.Id && d.EventId == model.EventID);
             if (existingDonation != null)
@@ -202,6 +227,7 @@ namespace CSDL.Controllers
                 return RedirectToAction("Index");
             }
 
+            // Kiểm tra khoảng cách 90 ngày với lần hiến máu gần nhất (nếu có)
             var latestDonation = await _context.BloodDonations
                 .Include(d => d.Event)
                 .Where(d => d.UserID == user.Id && d.Status == BloodDonationStatus.Completed)

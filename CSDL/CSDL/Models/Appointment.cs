@@ -21,5 +21,8 @@ namespace CSDL.Models
 
         [ForeignKey("UserID")]
         public User User { get; set; }
+        [Required]
+        public DateTime RegisterDate { get; set; } = DateTime.Now;
+
     }
 }
