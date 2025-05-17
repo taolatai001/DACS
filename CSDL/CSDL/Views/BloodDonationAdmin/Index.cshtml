@@ -68,6 +68,21 @@
                             <a asp-action="Details" asp-route-id="@item.DonationID" class="btn btn-info btn-sm">
                                 <i class="fas fa-eye"></i> Xem
                             </a>
+
+                            @if (item.Status == CSDL.Models.BloodDonationStatus.Completed)
+                            {
+                                if (item.IsCertificateIssued)
+                                {
+                                    <span class="badge bg-success">Đã cấp</span>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-outline-primary btn-sm issue-certificate" data-id="@item.DonationID">
+                                        <i class="fas fa-file-pdf"></i> Cấp giấy chứng nhận
+                                    </button>
+                                }
+                            }
+
                             @if (item.Status == CSDL.Models.BloodDonationStatus.Pending)
                             {
                                 <form asp-action="Confirm" asp-route-id="@item.DonationID" method="post">
@@ -99,3 +114,24 @@ else
         <i class="fas fa-info-circle"></i> Hiện chưa có đăng ký hiến máu nào.
     </div>
 }
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $(document).on('click', '.issue-certificate', function () {
+                var donationId = $(this).data('id');
+                if (confirm("Bạn có chắc muốn cấp giấy chứng nhận không?")) {
+                    $.get('/BloodDonationAdmin/GenerateCertificate', { donationId: donationId }, function (response) {
+                        alert(response.message);
+                        if (response.success && response.link) {
+                            window.open(response.link, '_blank');
+                            location.reload();
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}
+
+

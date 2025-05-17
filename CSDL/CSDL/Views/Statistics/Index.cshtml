@@ -30,24 +30,28 @@
         </div>
     </div>
 </div>
-<h3 class="mt-4">Biểu đồ lượt hiến máu theo tháng</h3>
+
+<h3 class="mt-4">📈 Biểu đồ lượt hiến máu theo tháng</h3>
 <canvas id="donationChart" width="600" height="300"></canvas>
+
+<h3 class="mt-4">🩸 Thống kê theo nhóm máu</h3>
+<canvas id="bloodTypeChart" width="600" height="300"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Thống kê theo tháng
     var donationsData = @Html.Raw(ViewBag.DonationsByMonth);
+    const monthLabels = donationsData.map(d => "Tháng " + d.Month);
+    const monthData = donationsData.map(d => d.Count);
 
-    const labels = donationsData.map(d => "Tháng " + d.Month);
-    const data = donationsData.map(d => d.Count);
-
-    const ctx = document.getElementById('donationChart').getContext('2d');
-    const chart = new Chart(ctx, {
+    const ctxMonth = document.getElementById('donationChart').getContext('2d');
+    new Chart(ctxMonth, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: monthLabels,
             datasets: [{
                 label: 'Số lượt hiến máu',
-                data: data,
+                data: monthData,
                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 1
@@ -56,20 +60,37 @@
         options: {
             responsive: true,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Thống kê lượt hiến máu theo tháng'
-                }
+                title: { display: true, text: 'Thống kê lượt hiến máu theo tháng' }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    stepSize: 1
-                }
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Thống kê theo nhóm máu
+    var bloodTypeData = @Html.Raw(ViewBag.DonationsByBloodType);
+    const bloodLabels = bloodTypeData.map(d => d.BloodType);
+    const bloodCounts = bloodTypeData.map(d => d.Count);
+
+    const ctxBlood = document.getElementById('bloodTypeChart').getContext('2d');
+    new Chart(ctxBlood, {
+        type: 'pie',
+        data: {
+            labels: bloodLabels,
+            datasets: [{
+                label: 'Số lượt hiến máu theo nhóm máu',
+                data: bloodCounts,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: 'Thống kê theo nhóm máu' }
             }
         }
     });
 </script>
+
 <h4 class="mt-5">🏅 Top 5 người hiến máu nhiều nhất</h4>
 <table class="table table-striped table-bordered mt-3">
     <thead>

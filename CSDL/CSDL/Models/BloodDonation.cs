@@ -37,5 +37,7 @@ namespace CSDL.Models
 
         // ✅ Mặc định trạng thái là Pending (chờ xác nhận)
         public BloodDonationStatus Status { get; set; } = BloodDonationStatus.Pending;
+        public bool IsCertificateIssued { get; set; } = false;
+
     }
 }

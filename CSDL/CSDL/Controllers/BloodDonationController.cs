@@ -133,6 +133,47 @@ namespace CSDL.Controllers
 
             return RedirectToAction("MyDonations");
         }
+        [HttpGet("BloodDonationAdmin/DownloadCertificate")]
+        public async Task<IActionResult> DownloadCertificate(int donationId)
+        {
+            var donation = await _context.BloodDonations
+                .Include(d => d.User)
+                .Include(d => d.Event)
+                .FirstOrDefaultAsync(d => d.DonationID == donationId && d.Status == BloodDonationStatus.Completed);
+
+            if (donation == null)
+                return NotFound();
+
+            var pdfPath = Path.Combine(Path.GetTempPath(), $"certificate_{donationId}.pdf");
+
+            if (!System.IO.File.Exists(pdfPath))
+                return NotFound("Giấy chứng nhận chưa được tạo hoặc đã bị xóa.");
+
+            var pdfBytes = await System.IO.File.ReadAllBytesAsync(pdfPath);
+            return File(pdfBytes, "application/pdf", "GiayChungNhanHienMau.pdf");
+        }
+
+
+        [Authorize(Roles = "User")]
+        [HttpGet]
+        public async Task<IActionResult> MyCertificate(int donationId)
+        {
+            var donation = await _context.BloodDonations
+                .Include(d => d.User)
+                .Include(d => d.Event)
+                .FirstOrDefaultAsync(d => d.DonationID == donationId && d.UserID == _userManager.GetUserId(User));
+
+            if (donation == null || !donation.IsCertificateIssued)
+                return NotFound("Bạn chưa được cấp giấy chứng nhận.");
+
+            var pdfPath = Path.Combine(Path.GetTempPath(), $"certificate_{donationId}.pdf");
+
+            if (!System.IO.File.Exists(pdfPath))
+                return NotFound("Không tìm thấy giấy chứng nhận.");
+
+            var pdfBytes = await System.IO.File.ReadAllBytesAsync(pdfPath);
+            return File(pdfBytes, "application/pdf", "GiayChungNhanHienMau.pdf");
+        }
 
         // ✅ Xử lý đăng ký hiến máu
         [HttpPost]

@@ -2,6 +2,8 @@
 using CSDL.Data;
 using CSDL.Models;
 using CSDL.Services;
+using DinkToPdf.Contracts;
+using DinkToPdf;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -64,6 +66,10 @@ builder.Services.AddAuthentication(options =>
 // ✅ Thêm Authorization
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddSingleton<IConverter>(new SynchronizedConverter(new PdfTools()));
+builder.Services.AddScoped<CertificateService>();
+
+
 
 // ✅ Thêm Controllers với Views
 builder.Services.AddControllersWithViews();

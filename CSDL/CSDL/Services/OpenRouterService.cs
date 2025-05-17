@@ -35,14 +35,18 @@ namespace CSDL.Services
         {
             var lowerPrompt = prompt.ToLower();
 
-            // ❗ Từ chối nếu không liên quan đến chủ đề hiến máu
-            string[] allowedKeywords = { "hiến máu", "máu", "donate", "blood", "sự kiện", "lịch sử", "đăng ký", "địa điểm", "ngày nào", "huyết học" };
+            // ❗ Giới hạn chỉ cho phép chủ đề liên quan đến hiến máu hoặc y tế
+            string[] allowedKeywords = {
+                "hiến máu", "máu", "donate", "blood", "sự kiện", "lịch sử", "đăng ký", "địa điểm", "ngày nào", "huyết học",
+                "y tế", "sức khỏe", "bệnh", "triệu chứng", "khám bệnh", "dịch vụ y tế", "bác sĩ", "chăm sóc sức khỏe", "tư vấn y tế"
+            };
+
             if (!allowedKeywords.Any(k => lowerPrompt.Contains(k)))
             {
-                return "🤖 Tôi chỉ hỗ trợ các câu hỏi liên quan đến **hiến máu nhân đạo** và các sự kiện hiến máu. Vui lòng đặt câu hỏi phù hợp.";
+                return "🤖 Tôi chỉ hỗ trợ các câu hỏi về **hiến máu nhân đạo** và **tư vấn sức khỏe, y tế cơ bản** trên hệ thống này. Mong bạn thông cảm.";
             }
 
-            // ✅ Gắn thông tin sự kiện sắp tới nếu có
+            // ✅ Đưa thông tin sự kiện sắp tới
             var events = GetUpcomingEvents();
             var eventsInfo = events.Any()
                 ? string.Join("\n", events.Select(e => $"- {e.EventName} (ngày {e.Date:dd/MM/yyyy} tại {e.Location})"))
@@ -53,11 +57,11 @@ namespace CSDL.Services
                 model = _options.Model,
                 messages = new[]
                 {
-            new
-            {
-                role = "system",
-                content = $@"
-🩸 Bạn là trợ lý AI cho hệ thống **Hiến Máu Nhân Đạo HUTECH**.
+                    new
+                    {
+                        role = "system",
+                        content = $@"
+🩸 Bạn là trợ lý AI cho hệ thống **Hiến Máu Nhân Đạo HUTECH** và hỗ trợ thông tin Y tế cơ bản.
 
 Trang web này cung cấp:
 - Đăng ký tham gia các sự kiện hiến máu sắp tới.
@@ -65,20 +69,22 @@ Trang web này cung cấp:
 - Cập nhật hồ sơ cá nhân gồm nhóm máu, BHYT và giấy khám sức khỏe.
 - Thông tin các sự kiện được tổ chức tại nhiều địa điểm.
 
+Ngoài ra, bạn cũng hỗ trợ các câu hỏi về sức khỏe và tư vấn y tế cơ bản.
+
 📅 Sự kiện sắp diễn ra:
 {eventsInfo}
 
-❗ Nếu người dùng hỏi các nội dung ngoài phạm vi hiến máu (ví dụ hỏi game, phim, tin tức...), bạn hãy lịch sự từ chối bằng:
-“Tôi chỉ hỗ trợ thông tin về hiến máu nhân đạo tại hệ thống này. Mong bạn thông cảm.”
+❗ Nếu người dùng hỏi các nội dung ngoài phạm vi hiến máu hoặc Y tế (ví dụ hỏi game, phim, tin tức...), bạn hãy lịch sự từ chối bằng:
+“Tôi chỉ hỗ trợ các câu hỏi về **hiến máu nhân đạo** và **tư vấn sức khỏe, y tế cơ bản** trên hệ thống này. Mong bạn thông cảm.”
 
-Hãy trả lời ngắn gọn, rõ ràng, dễ hiểu và chỉ tập trung vào chủ đề hiến máu."
-            },
-            new
-            {
-                role = "user",
-                content = prompt
-            }
-        }
+Hãy trả lời ngắn gọn, rõ ràng, dễ hiểu và chỉ tập trung vào chủ đề hiến máu và y tế."
+                    },
+                    new
+                    {
+                        role = "user",
+                        content = prompt
+                    }
+                }
             };
 
             var json = JsonSerializer.Serialize(requestBody);
@@ -99,6 +105,5 @@ Hãy trả lời ngắn gọn, rõ ràng, dễ hiểu và chỉ tập trung vào
                       .GetString()
                       ?.Trim() ?? "Không có phản hồi từ chatbot.";
         }
-
     }
 }

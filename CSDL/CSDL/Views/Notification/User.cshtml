@@ -11,8 +11,16 @@
         @foreach (var item in Model)
         {
             <li class="list-group-item">
-                <strong>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong><br />
-                @item.Message
+                <h5 class="mb-1">@item.Title</h5> <!-- ✅ Hiển thị tiêu đề -->
+                <small class="text-muted">@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small><br />
+                <p class="mb-1">@item.Message</p>
+
+                @if (!string.IsNullOrEmpty(item.Link) && item.Link != "#")
+                {
+                    <a href="@item.Link" target="_blank" class="btn btn-sm btn-primary mt-2">
+                        📄 Xem chi tiết
+                    </a>
+                }
             </li>
         }
     </ul>

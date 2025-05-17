@@ -119,6 +119,9 @@
                     <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Trang chủ</a></li>
                     <li class="nav-item"><a class="nav-link" href="/Home/About"><i class="fas fa-info-circle"></i> Giới thiệu</a></li>
                     <li class="nav-item"><a class="nav-link" href="@Url.Action("Map", "Home")"><i class="fas fa-map-marked-alt"></i> Bản đồ</a></li>
+                    @{
+                        var unreadCount = ViewBag.UnreadNotificationCount as int? ?? 0;
+                    }
 
                     @if (User.Identity.IsAuthenticated)
                     {
@@ -134,9 +137,19 @@
                         {
                             <li class="nav-item"><a class="nav-link" href="/BloodDonation/MyDonations"><i class="fas fa-history"></i> Lịch sử</a></li>
                             <li class="nav-item"><a class="nav-link" href="/BloodDonation"><i class="fas fa-hand-holding-medical"></i> Đăng ký</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/Notification/User"><i class="fas fa-bell"></i> Thông báo</a></li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/Notification/User">
+                                    <i class="fas fa-bell"></i> Thông báo
+                                    @await Component.InvokeAsync("NotificationCount")
+                                    @if (unreadCount > 0)
+                                    {
+                                        <span class="badge bg-danger">@unreadCount</span>
+                                    }
+                                </a>
+                            </li>
                         }
                     }
+
                     else
                     {
                         <li class="nav-item"><a class="nav-link text-primary" href="/Account/Login"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a></li>

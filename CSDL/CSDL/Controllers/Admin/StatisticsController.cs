@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace CSDL.Controllers.Admin
 {
     [Authorize(Roles = "Admin")]
-    [Route("admin/thong-ke")]
+    [Route("Statistics")]
     public class StatisticsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -47,21 +47,33 @@ namespace CSDL.Controllers.Admin
                       })
                 .ToListAsync();
 
+            var donationsByMonth = await _context.BloodDonations
+                .GroupBy(d => d.RegistrationDate.Month)
+                .Select(g => new
+                {
+                    Month = g.Key,
+                    Count = g.Count()
+                })
+                .OrderBy(g => g.Month)
+                .ToListAsync();
+
+            var donationsByBloodType = await _context.BloodDonations
+                .GroupBy(d => d.BloodType)
+                .Select(g => new
+                {
+                    BloodType = g.Key,
+                    Count = g.Count()
+                })
+                .OrderByDescending(g => g.Count)
+                .ToListAsync();
+
+            // Đưa dữ liệu vào ViewBag
             ViewBag.TotalDonations = totalDonations;
             ViewBag.TotalUsers = totalUsers;
             ViewBag.TotalEvents = totalEvents;
             ViewBag.TopUsers = topUsers;
-            var donationsByMonth = await _context.BloodDonations
-    .GroupBy(d => d.RegistrationDate.Month)
-    .Select(g => new
-    {
-        Month = g.Key,
-        Count = g.Count()
-    })
-    .OrderBy(g => g.Month)
-    .ToListAsync();
-
             ViewBag.DonationsByMonth = System.Text.Json.JsonSerializer.Serialize(donationsByMonth);
+            ViewBag.DonationsByBloodType = System.Text.Json.JsonSerializer.Serialize(donationsByBloodType);
 
             return View();
         }

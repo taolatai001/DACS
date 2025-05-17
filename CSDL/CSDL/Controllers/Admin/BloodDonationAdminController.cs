@@ -86,6 +86,88 @@ namespace CSDL.Controllers.Admin
         }
 
 
+        [HttpGet]
+        public async Task<IActionResult> GenerateCertificate(int donationId)
+        {
+            var donation = await _context.BloodDonations
+                .Include(d => d.User)
+                .Include(d => d.Event)
+                .FirstOrDefaultAsync(d => d.DonationID == donationId && d.Status == BloodDonationStatus.Completed);
+
+            if (donation == null)
+                return Json(new { success = false, message = "Không tìm thấy đăng ký hoặc chưa được xác nhận." });
+
+            if (donation.IsCertificateIssued)
+                return Json(new { success = false, message = "Giấy chứng nhận đã được cấp trước đó." });
+
+            // Đánh dấu đã cấp
+            donation.IsCertificateIssued = true;
+            await _context.SaveChangesAsync();
+            // ✅ Tạo nội dung HTML đầy đủ
+            var htmlContent = $@"
+    <html>
+    <head>
+        <meta charset='utf-8'>
+        <title>Giấy Chứng Nhận</title>
+    </head>
+    <body style='text-align:center; font-family: Arial, sans-serif; padding: 50px; border: 5px solid red;'>
+        <h1 style='color: darkred;'>GIẤY CHỨNG NHẬN HIẾN MÁU NHÂN ĐẠO</h1>
+        <p>Chứng nhận rằng <strong>{donation.User.FullName}</strong></p>
+        <p>Đã hiến máu tại sự kiện <strong>{donation.Event.EventName}</strong></p>
+        <p>Địa điểm: <strong>{donation.Event.Location}</strong></p>
+        <p>Ngày: <strong>{donation.Event.Date:dd/MM/yyyy}</strong></p>
+        <p>Nhóm máu: <strong>{donation.User.BloodType}</strong></p>
+        <div style='margin-top:50px; font-style: italic;'>
+            <p>Xin chân thành cảm ơn nghĩa cử cao đẹp của bạn.</p>
+            <p>Ngày cấp: {DateTime.Now:dd/MM/yyyy}</p>
+        </div>
+    </body>
+    </html>";
+
+            // Tạo file tạm
+
+            var htmlFilePath = Path.Combine(Path.GetTempPath(), $"certificate_{donationId}.html");
+            await System.IO.File.WriteAllTextAsync(htmlFilePath, htmlContent);
+
+            var wkhtmlPath = @"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe";
+            var outputPdfPath = Path.Combine(Path.GetTempPath(), $"certificate_{donationId}.pdf");
+
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = wkhtmlPath,
+                Arguments = $"\"{htmlFilePath}\" \"{outputPdfPath}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = System.Diagnostics.Process.Start(psi);
+            await process.StandardOutput.ReadToEndAsync();
+            await process.StandardError.ReadToEndAsync();
+            process.WaitForExit();
+
+            if (!System.IO.File.Exists(outputPdfPath))
+            {
+                return Json(new { success = false, message = "Lỗi tạo giấy chứng nhận." });
+            }
+
+            // Tạo thông báo
+            var notification = new Notification
+            {
+                UserId = donation.UserID,
+                Title = "Giấy chứng nhận hiến máu đã sẵn sàng",
+                Message = $"Bạn đã hiến máu thành công tại sự kiện {donation.Event.EventName}. Giấy chứng nhận đã được cấp.",
+                Link = Url.Action("DownloadCertificate", "BloodDonationAdmin", new { donationId }, Request.Scheme),
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            var downloadLink = Url.Action("DownloadCertificate", "BloodDonationAdmin", new { donationId }, Request.Scheme);
+            return Json(new { success = true, message = "Cấp giấy chứng nhận thành công.", link = downloadLink });
+        }
 
         // ✅ Admin xác nhận người hiến máu
         [HttpPost]

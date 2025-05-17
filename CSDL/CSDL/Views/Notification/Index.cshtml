@@ -1,4 +1,6 @@
 ﻿@model IEnumerable<CSDL.Models.Notification>
+@using Microsoft.AspNetCore.Identity
+
 @{
     ViewData["Title"] = "Quản lý Thông báo";
 }
@@ -26,6 +28,7 @@
     <thead>
         <tr>
             <th>#</th>
+            <th>Người nhận</th>
             <th>Nội dung</th>
             <th>Thời gian</th>
         </tr>
@@ -38,6 +41,16 @@
             {
                 <tr>
                     <td>@index++</td>
+                    <td>
+                        @if (string.IsNullOrEmpty(item.UserId))
+                        {
+                            <span>Tất cả mọi người</span>
+                        }
+                        else
+                        {
+                            @(item.User != null ? item.User.FullName : item.UserId)
+                        }
+                    </td>
                     <td>@item.Message</td>
                     <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                 </tr>
@@ -46,7 +59,7 @@
         else
         {
             <tr>
-                <td colspan="3">Chưa có thông báo nào.</td>
+                <td colspan="4">Chưa có thông báo nào.</td>
             </tr>
         }
     </tbody>
